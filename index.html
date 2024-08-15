@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8">
+		<title>AI &lt;( '-')&gt;</title>
+		<script type="text/javascript" src="train-data.js"></script>
+
+		<script type="module" src="nnv.js"></script>
+		<script type="module" src="nnchart.js"></script>
+		<script type="module" src="nntest.js"></script>
+		<style type="text/css">
+body,html {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	height: 100vh;
+}
+
+table {
+	margin-top: calc( 50vh - 250px );
+	margin-left: calc( 50% - 450px );
+	border-collapse: collapse;
+}
+
+#cv {
+	display: inline-block;
+	width: 700px;
+	height: 500px;
+}
+
+td {
+	background-color: #eee;
+}
+
+.stats-col {
+	width: 120px;
+	background-color: #f4f4f4;
+	text-align: center;
+}
+		</style>
+	</head>
+	<body onload="void launch()">
+		<table><tbody>
+			<tr>
+				<td>
+					<div id="fig-container"><canvas id="cv" width="1400" height="1000"></canvas></div>
+				</td>
+				<td class="stats-col" id="elog-container">
+
+				</td>
+			</tr>
+		</tbody></table>
+	</body>
+</html>
