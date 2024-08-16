@@ -690,10 +690,11 @@ function renderEdges(g, w, h, pixelRatio, nn) {
 			const nd = l_nodes[i];
 			nd.backwards.forEach(edge => {
 				const destNode = edge.originNode;
-				const wAlpha = (Math.abs(edge.weight) / l_stats.weightMax) * 0.4;
+				const w_ratio = Math.abs(edge.weight) / l_stats.weightMax;
+				const wAlpha = w_ratio * 0.5;
 
 				g.lineWidth = pixelRatio;
-				g.strokeStyle = `rgba(80,80,88,${0.1+wAlpha})`;
+				g.strokeStyle = `hsla(${ 240-Math.floor(240*w_ratio) },90%,50%,${0.03+wAlpha})`;
 				g.beginPath();
 				g.moveTo(nd.viz.sx, nd.viz.sy);
 				g.lineTo(destNode.viz.sx, destNode.viz.sy);
@@ -731,5 +732,11 @@ function renderConstantNode(g, cx, cy, size, pixelRatio, label) {
 
 	g.restore();
 }
+
+/*
+function raise_by_log(raw) {
+	return Math.log(raw*1.718281828 + 1);
+}
+*/
 
 export { NeuralNetwork, NNNode, NNConnection, buildNetwork, renderNetwork };
