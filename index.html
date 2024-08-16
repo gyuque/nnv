@@ -3,45 +3,31 @@
 	<head>
 		<meta charset="utf-8">
 		<title>AI &lt;( '-')&gt;</title>
+		<link rel="stylesheet" href="./css/nnv.css">
 		<script type="text/javascript" src="train-data.js"></script>
 
 		<script type="module" src="nnv.js"></script>
 		<script type="module" src="nnchart.js"></script>
 		<script type="module" src="nntest.js"></script>
-		<style type="text/css">
-body,html {
-	margin: 0;
-	padding: 0;
-	overflow: hidden;
-	height: 100vh;
-}
-
-table {
-	margin-top: calc( 50vh - 250px );
-	margin-left: calc( 50% - 450px );
-	border-collapse: collapse;
-}
-
-#cv {
-	display: inline-block;
-	width: 700px;
-	height: 500px;
-}
-
-td {
-	background-color: #eee;
-}
-
-.stats-col {
-	width: 120px;
-	background-color: #f4f4f4;
-	text-align: center;
-}
-		</style>
 	</head>
 	<body onload="void launch()">
 		<table><tbody>
 			<tr>
+				<td class="control-col" id="controller-container">
+					<fieldset>
+						<legend>Learning rate</legend>
+						<input type="number" step="0.001" max="1" min="0.001" value="0.003">
+					</fieldset>
+					<fieldset>
+						<legend>Completion threshold</legend>
+						<input type="number" step="0.0001" max="1" min="0.0001" value="0.001">
+					</fieldset>
+					<div id="control-button-container">
+						<button style="background-color: #B00; color: #FFF" title="Rebuild">↻</button>&nbsp;
+						<button style="background-color: #29C; color: #FFF" title="Start learning">▶</button>
+						<button style="background-color: #999; color: #FFF" title="Pause">⏸</button>
+					</div>
+				</td>
 				<td>
 					<div id="fig-container"><canvas id="cv" width="1400" height="1000"></canvas></div>
 				</td>

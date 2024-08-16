@@ -144,4 +144,60 @@ function create_canvas_with_pixel_ratio(w, h, pixelRatio) {
 	return cv;
 }
 
-export { NNErrorLogChart };
+class LearningThrobber {
+	constructor() {
+		this.element = document.createElement("div");
+		this.element.className = "throbber-container";
+		this.imageList = [];
+
+		this.addImage("./images/bb1.png");
+		this.addImage("./images/bb2.png");
+		this.addImage("./images/bb0.png");
+
+		this.caption = document.createElement("span");
+		this.caption.className = "throbber-caption";
+		this.element.appendChild(this.caption);
+
+		this.nowReady();
+	}
+
+	nowReady() {
+		this.showDefaultFrame();
+		this.caption.innerHTML = "Ready";
+	}
+
+	addImage(url) {
+		const index = this.imageList.length;
+		const img = document.createElement("img");
+		img.src = url;
+		img.className = "learning-throbber";
+		img.style.zIndex = index;
+
+		this.imageList.push(img);
+		this.element.appendChild(img);
+	}
+
+	showDefaultFrame() {
+		this.toggleVisibility(0, true);
+		this.toggleVisibility(1, false);
+
+		this.toggleAnimation(1, 1);
+	}
+
+	showThinkingFrame() {
+		this.toggleVisibility(1, true);
+		this.toggleVisibility(0, false);
+
+		this.toggleAnimation(1, 0);
+	}
+
+	toggleVisibility(index, visible) {
+		this.imageList[index].style.visibility = visible ? "" : "hidden";
+	}
+
+	toggleAnimation(index, animationSelector) {
+		this.imageList[index].dataset.animation = animationSelector || 0;
+	}
+}
+
+export { NNErrorLogChart, LearningThrobber };

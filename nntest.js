@@ -1,5 +1,5 @@
 "use strict";
-import { NNErrorLogChart } from "./nnchart.js";
+import { LearningThrobber, NNErrorLogChart } from "./nnchart.js";
 import { buildNetwork, renderNetwork } from "./nnv.js";
 
 const TestNN = {
@@ -26,6 +26,7 @@ const TestNN = {
 
 var theNN = null;
 var theLogChart = null;
+var theThrobber = null;
 var restFrameCount = 318;
 
 window.launch = function() {
@@ -47,6 +48,9 @@ function setupCharts(containerElement, n) {
 	theLogChart = new NNErrorLogChart(100, 192, window.devicePixelRatio, n+1);
 	containerElement.appendChild(theLogChart.canvas);
 	theLogChart.render();
+
+	theThrobber = new LearningThrobber();
+	containerElement.appendChild(theThrobber.element);
 }
 
 function enterFrame() {
