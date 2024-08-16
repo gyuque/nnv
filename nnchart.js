@@ -161,9 +161,20 @@ class LearningThrobber {
 		this.nowReady();
 	}
 
+	setGlitter(type) {
+		this.caption.dataset.glitter = type;
+	}
+
 	nowReady() {
 		this.showDefaultFrame();
 		this.caption.innerHTML = "Ready";
+		this.setGlitter(0);
+	}
+
+	nowComplete() {
+		this.showDefaultFrame();
+		this.caption.innerHTML = "Complete!";
+		this.setGlitter(1);
 	}
 
 	addImage(url) {
@@ -181,14 +192,16 @@ class LearningThrobber {
 		this.toggleVisibility(0, true);
 		this.toggleVisibility(1, false);
 
-		this.toggleAnimation(1, 1);
+		this.toggleAnimation(1, 0);
 	}
 
 	showThinkingFrame() {
 		this.toggleVisibility(1, true);
 		this.toggleVisibility(0, false);
 
-		this.toggleAnimation(1, 0);
+		this.toggleAnimation(1, 1);
+		this.caption.innerHTML = "Learning...";
+		this.setGlitter(2);
 	}
 
 	toggleVisibility(index, visible) {
@@ -200,4 +213,42 @@ class LearningThrobber {
 	}
 }
 
-export { NNErrorLogChart, LearningThrobber };
+class ButtonManager {
+	constructor(container_id, callback) {
+		this.commandMap = {};
+
+		const containerElement = document.getElementById(container_id);
+		this.scan(containerElement);
+		this.clickCallback = callback;
+	}
+
+	scan(containerElement) {
+		const ls = containerElement.getElementsByTagName("button");
+		const n = ls.length;
+		for (let i = 0;i < n;++i) {
+			const btn = ls[i];
+			btn.addEventListener("click", this.onClick.bind(this, btn), false);
+
+			this.commandMap[ get_button_command(btn) ] = btn;
+		}
+	}
+
+	onClick(button) {
+		const cmd = get_button_command(button);
+
+		if (this.clickCallback) {
+			this.clickCallback(this, button, cmd);
+		}
+	}
+
+	setDisabled(cmd, disabled) {
+		const b = this.commandMap[cmd];
+		if (!b) { return; }
+
+		b.disabled = disabled;
+	}
+}
+
+function get_button_command(el) { return el.dataset.command; }
+
+export { NNErrorLogChart, LearningThrobber, ButtonManager };

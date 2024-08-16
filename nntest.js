@@ -1,5 +1,5 @@
 "use strict";
-import { LearningThrobber, NNErrorLogChart } from "./nnchart.js";
+import { ButtonManager, LearningThrobber, NNErrorLogChart } from "./nnchart.js";
 import { buildNetwork, renderNetwork } from "./nnv.js";
 
 const TestNN = {
@@ -20,16 +20,28 @@ const TestNN = {
 		randomFunc: "uniform",
 
 		// ======= Learning rate =======
-		learningRate: 0.003
+		learningRate: 0.003,
+
+		// ======= Completion threshold =======
+		completionThreshold: 0.001
 	}
 };
 
 var theNN = null;
 var theLogChart = null;
+var theControlButtons = null;
 var theThrobber = null;
-var restFrameCount = 318;
+var currentFrameCount = 0;
+var gIterationCountDisplay = null;
+var gAnimationActive = false;
 
 window.launch = function() {
+	resetNN();
+	theControlButtons = new ButtonManager("control-button-container", onCommandButtonClick);
+	theControlButtons.setDisabled("p", true);
+};
+
+function resetNN() {
 	const cv = document.getElementById("cv");
 	const nn = buildNetwork(TestNN);
 
@@ -39,12 +51,19 @@ window.launch = function() {
 
 	theNN = nn.ready();
 	setupCharts(document.getElementById("elog-container"), TestNN.Initialization.numOfSamples);
-
 	renderNetwork(cv, theNN, window.devicePixelRatio);
-	setTimeout(enterFrame, 300);
-};
+
+	currentFrameCount = 0;
+}
 
 function setupCharts(containerElement, n) {
+	containerElement.innerHTML = "";
+
+	gIterationCountDisplay = document.createElement("p");
+	gIterationCountDisplay.className = "iteration-counter";
+	containerElement.appendChild(gIterationCountDisplay);
+	updateIterationCounter(0);
+
 	theLogChart = new NNErrorLogChart(100, 192, window.devicePixelRatio, n+1);
 	containerElement.appendChild(theLogChart.canvas);
 	theLogChart.render();
@@ -53,12 +72,19 @@ function setupCharts(containerElement, n) {
 	containerElement.appendChild(theThrobber.element);
 }
 
+function updateIterationCounter(i) {
+	if (gIterationCountDisplay) {
+		gIterationCountDisplay.innerHTML = "";
+		gIterationCountDisplay.appendChild( document.createTextNode(`Iteration: ${i}`) );
+	}
+}
+
 function enterFrame() {
 	const cv = document.getElementById("cv");
 	for (let i = 0;i < 29;++i) {
 		theNN.advanceLearning();
 	}
-	const showSampleIndex = 9-((restFrameCount >> 3) % 10);
+	const showSampleIndex = (currentFrameCount >> 3) % 10;
 	theNN.advanceLearning( (nn, sampleIndex) => {
 		if (sampleIndex === showSampleIndex) {
 			nn.doForwardPropagation();
@@ -72,7 +98,47 @@ function enterFrame() {
 	theLogChart.pushValue(theNN.numOfSamples, theNN.lastTotalError);
 	theLogChart.render();
 
-	if (--restFrameCount > 0) {
+	updateIterationCounter(theNN.iterationCount);
+
+	if (theNN.lastTotalError <= TestNN.Initialization.completionThreshold) {
+		stopLearning(true);
+	}
+
+	++currentFrameCount;
+	if (gAnimationActive) {
 		requestAnimationFrame(enterFrame);
+	}
+}
+
+function onCommandButtonClick(_manager, _button, command) {
+	switch(command) {
+		case 'r':
+			resetNN();
+			break;
+
+		case 'x':
+			if (!gAnimationActive) {
+				theThrobber.showThinkingFrame();
+				gAnimationActive = true;
+				theControlButtons.setDisabled("x", true);
+				theControlButtons.setDisabled("p", false);
+				enterFrame();
+			}
+			break;
+		case 'p':
+			stopLearning();
+			break;
+	}
+}
+
+function stopLearning(complete) {
+	gAnimationActive = false;
+	theControlButtons.setDisabled("x", false);
+	theControlButtons.setDisabled("p", true);
+
+	if (complete) {
+		theThrobber.nowComplete();
+	} else {
+		theThrobber.nowReady();
 	}
 }

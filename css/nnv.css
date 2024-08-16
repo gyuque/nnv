@@ -21,6 +21,12 @@ td {
 	background-color: #eee;
 }
 
+.iteration-counter {
+	font-size: 10px;
+	font-weight: bold;
+	font-family: monospace;
+}
+
 .stats-col {
 	width: 120px;
 	background-color: #f4f4f4;
@@ -103,4 +109,46 @@ td {
 #control-button-container button:hover:active {
 	box-shadow: 0 -1px 0.5px rgba(0,0,0,0.75), 0 2px 5px rgba(0,0,0,0.25) inset;
 	transform: translateY(1px);
+}
+
+#control-button-container button:disabled,
+#control-button-container button:hover:active:disabled {
+	opacity: 0.5;
+	filter: saturate(0) contrast(0.75);
+	cursor: default;
+	box-shadow: none;
+	transform: translateY(0);
+}
+
+@keyframes glitter {
+	0% {
+		background-position: -200px 50%;
+	}
+
+	100% {
+		background-position: 200px 50%;
+	}
+}
+
+@keyframes blinking {
+	0% {
+		opacity: 100%;
+	}
+
+	50% {
+		opacity: 10%;
+	}
+
+	100% {
+		opacity: 100%;
+	}
+}
+
+[data-glitter="1"] {
+	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAoAQMAAABTru9CAAAABlBMVEUAAAD/6k23A6tpAAAAAXRSTlMAQObYZgAAADlJREFUGNNjAIP/QPAHzGIEMX+Amcwg5gcwkx3EfABm8oOYB8BMeRCzAcy0BzEhZtUDWf9GjaWxsQBdrr1DOc0lSQAAAABJRU5ErkJggg==") no-repeat;	
+	animation: glitter forwards 1.5s 1 ease 0s;
+}
+
+[data-glitter="2"] {
+	animation: blinking forwards 1s infinite ease 0s;
 }

@@ -28,6 +28,7 @@ class NeuralNetwork {
 			this.layerList[i] = createLayerMetadata();
 		}
 		
+		this.iterationCount = 0;
 		this.lastTotalError = 1;
 		this.currentSample = null;
 		this.numOfSamples = numOfSamples;
@@ -112,6 +113,8 @@ class NeuralNetwork {
 		this.updateWeights();
 		this.doForwardPropagation();
 		this.lastTotalError = sumE / n;
+
+		++this.iterationCount;
 	}
 
 	doBackPropagation() {
