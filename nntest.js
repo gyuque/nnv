@@ -20,7 +20,7 @@ const TestNN = {
 		randomFunc: "uniform",
 
 		// ======= Learning rate =======
-		learningRate: 0.02,
+		learningRate: 0.03,
 
 		// ======= Completion threshold =======
 		completionThreshold: 0.001
@@ -111,7 +111,7 @@ function enterFrame() {
 
 	updateIterationCounter(theNN.iterationCount);
 
-	if (currentFrameCount === 200) {
+	if (currentFrameCount === 190) {
 		theThrobber.setPanic(1);
 	}
 

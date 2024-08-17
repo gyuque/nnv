@@ -237,9 +237,15 @@ table {
 	padding: 2px 0 0 0;
 	border-top-left-radius: 3px;
 	border-top-right-radius: 3px;
+	cursor: pointer;
 }
 
 #control-page-list li[data-selected="1"] {
 	border-top: 2px solid #39E;
 	opacity: 1;
+	cursor: default;
+}
+
+#control-page-list li[data-selected="0"]:hover {
+	border-top-color: #999;
 }

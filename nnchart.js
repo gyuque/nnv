@@ -166,6 +166,9 @@ class LearningThrobber {
 
 	setPanic(level) {
 		this.element.dataset.panic = level;
+		if (level > 0) {
+			this.caption.innerHTML = "Oh! busy!";
+		}
 	}
 
 	setGlitter(type) {
@@ -274,17 +277,22 @@ class TabPager {
 
 	scan(containerElement) {
 		const tabstrip = containerElement.getElementsByClassName("pager-tab");
-		const pages = containerElement.getElementsByClassName("paged-content");
 
 		this.pushChildElements(this.tabElements, tabstrip[0], "li").forEach( (li, li_index) => {
 			li.addEventListener("click", this.onTabClick.bind(this, li, li_index));
 		} );
+
+		this.pushChildElements(this.pageElements, containerElement, "div", "paged-content");
 	}
 
-	pushChildElements(outArray, parent, tagName) {
+	pushChildElements(outArray, parent, tagName, withClass) {
 		const ls = parent.getElementsByTagName(tagName);
 		const n = ls.length;
 		for (let i = 0;i < n;++i) {
+			if (withClass) {
+				if (ls[i].className !== withClass) { continue; }
+			}
+
 			outArray.push(ls[i]);
 		}
 
@@ -296,6 +304,11 @@ class TabPager {
 		for (let i = 0;i < n;++i) {
 			const sel_flag = (i === selIndex) ? 1 : 0;
 			this.tabElements[i].dataset.selected = sel_flag;
+
+			const pg = this.pageElements[i];
+			if (pg) {
+				pg.style.display = sel_flag ? "block" : "none";
+			}
 		}
 	}
 
