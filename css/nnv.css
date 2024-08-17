@@ -3,22 +3,22 @@ body,html {
 	padding: 0;
 	overflow: hidden;
 	height: 100vh;
+	background-color: #333;
 }
 
 table {
 	margin-top: calc( 50vh - 250px );
 	margin-left: calc( 50% - 500px );
 	border-collapse: collapse;
+	background-color: #333;
+	color: #eee;
 }
 
 #cv {
 	display: inline-block;
 	width: 700px;
 	height: 500px;
-}
-
-td {
-	background-color: #eee;
+	background-color: #333;
 }
 
 .iteration-counter {
@@ -29,15 +29,17 @@ td {
 
 .stats-col {
 	width: 120px;
-	background-color: #f4f4f4;
 	text-align: center;
 }
 
 .control-col {
-	padding: 5px;
+	padding-left: 5px;
+	padding-right: 5px;
 	width: 170px;
-	background-color: #f4f4f4;
 	text-align: center;
+	vertical-align: top;
+	background-color: #444;
+	border-radius: 3px;
 }
 
 .throbber-container {
@@ -80,13 +82,20 @@ td {
 	left: 0;
 	text-align: center;
 	font-size: 11px;
-	color: #555;
+	color: #eee;
 	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .control-col legend {
 	font-size: 10px;
-	color: #555;
+	color: #aaa;
+	border-color: #999;
+}
+
+.control-col fieldset {
+	border: 1px solid #888;
+	margin-left: 8px;
+	margin-right: 8px;
 }
 
 
@@ -151,4 +160,86 @@ td {
 
 [data-glitter="2"] {
 	animation: blinking forwards 1s infinite ease 0s;
+}
+
+#train-data-preview canvas {
+	margin-left: 1px;
+	margin-right: 1px;
+}
+
+@keyframes sweat1 {
+	0% {
+		transform: translateY(7px) rotate(-19deg);
+		opacity: 1;
+	}
+
+	100% {
+		transform: rotate(40deg) translateX(10px);
+		opacity: 0;
+	}
+}
+
+@keyframes sweat2 {
+	0% {
+		transform: translateY(10px) rotate(-30deg);
+		opacity: 1;
+	}
+
+	100% {
+		transform: rotate(50deg) translateX(10px);
+		opacity: 0;
+	}
+}
+
+@keyframes sweat3 {
+	0% {
+		transform: scaleX(-1) rotate(-30deg);
+		opacity: 1;
+	}
+
+	100% {
+		transform: scaleX(-1) rotate(50deg);
+		opacity: 0;
+	}
+}
+
+.throbber-sweat-3 {
+	top: -3px;
+	animation: sweat3 forwards 1s infinite ease -0.2s;
+	display: none;
+}
+
+[data-panic="1"] .throbber-sweat-3 {
+	display: inline-block;
+}
+
+/* paged */
+#control-page-list {
+	margin: 0;
+	padding: 0;
+	position: relative;
+	height: 1px;
+	text-align: left;
+}
+
+#control-page-list li {
+	text-align: center;
+	display: inline-block;
+	list-style-type: none;
+	font-size: 11px;
+	border-top: 2px solid #555;
+	width: 60px;
+	height: 20px;
+	background-color: #444;
+	position: relative;
+	top: -25px;
+	opacity: 0.7;
+	padding: 2px 0 0 0;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+}
+
+#control-page-list li[data-selected="1"] {
+	border-top: 2px solid #39E;
+	opacity: 1;
 }

@@ -42,6 +42,11 @@ class NeuralNetwork {
 		return this.trainDataList.forEach(fn);
 	}
 
+	forEachNodeAtLayer(i, fn) {
+		if (i < 0) { i = this.layerList.length - 1; }
+		this.layerList[i].nodes.forEach(fn);
+	}
+
 	setClassificationTrainData(sampleIndex, inArray, outClassIndex) {
 		this.trainDataList[sampleIndex].inValues = inArray;
 		this.trainDataList[sampleIndex].expectedResult = outClassIndex;
@@ -300,6 +305,7 @@ function createLayerMetadata(options) {
 class NNNode {
 	constructor(nType) {
 		this.type = nType || NT_Generic;
+		this.label = null;
 		this.forwards = [];
 		this.backwards = [];
 		this.inputBias = 0;
@@ -387,11 +393,11 @@ class NNNode {
 		for (const e of this.backwards) {
 			const a = Math.sqrt(6.0 / M);
 
-			if (e.originNode && e.originNode.type === NT_Constant) {
+/*			if (e.originNode && e.originNode.type === NT_Constant) {
 				e.zeroWeight();
-			} else {
+			} else {*/
 				e.uniformRand(a);
-			}
+//			}
 
 			if (e.originNode) {
 				e.originNode.initBackWeights(denominatorType);
@@ -582,7 +588,7 @@ function renderNodes(g, w, h, pixelRatio, nn) {
 			const nd = l_nodes[i];
 
 			g.strokeStyle = "#345";
-			g.fillStyle = "#e0e3fe";
+			g.fillStyle = "#456";
 			g.lineWidth = pixelRatio;
 
 			const radius = 9 * pixelRatio;
@@ -601,9 +607,31 @@ function renderNodes(g, w, h, pixelRatio, nn) {
 						renderOutputMeter(g, nd, radius, pixelRatio, l_stats);
 					}
 				}
+
+				if (nd.label) {
+					renderNodeLabel(g, nd.viz.sx + radius, nd.viz.sy - radius, nd.label, pixelRatio);
+				}
 			}
 		}
 	}	
+}
+
+function renderNodeLabel(g, x, y, text, pixelRatio) {
+	g.save();
+
+	g.textAlign = "center";
+	g.textBaseline = "middle";
+	g.font = `bold ${8*pixelRatio}px sans-serif`;
+
+	g.beginPath();
+	g.arc(x, y, 6*pixelRatio, 0, Math.PI*2, false);
+	g.fillStyle = "#346";
+	g.fill();
+
+	g.fillStyle = "#fff";
+	g.fillText(text, x, y);
+
+	g.restore();
 }
 
 function renderOutputMeter(g, node, nodeRadius, pixelRatio, layerStats) {
@@ -633,16 +661,16 @@ function renderOutputMeter(g, node, nodeRadius, pixelRatio, layerStats) {
 
 function renderMeter(g, x, y, w, h, ratio, color, label, pixelRatio, offsetX) {
 	const w2 = w/2;
-	g.fillStyle = "#BBB";
+	g.fillStyle = "#555";
 	g.fillRect(x, y, w2, h);
-	g.fillStyle = "#CCC";
+	g.fillStyle = "#666";
 	g.fillRect(x+w2, y, w2, h);
 
 	g.fillStyle = color;
 	const len = w2*ratio;
 	g.fillRect(x+w2 + (offsetX || 0), y, len, h);
 
-	g.fillStyle = "#444";
+	g.fillStyle = "#aaa";
 	g.font = "normal 12px monospace";
 	g.textBaseline = "top";
 	g.textAlign = "left";
@@ -681,20 +709,28 @@ function render2DNode(g, node, pixelRatio) {
 }
 
 function renderEdges(g, w, h, pixelRatio, nn) {
+	g.save();
+	g.globalCompositeOperation = "lighter";
+
 	const nLayers = nn.countLayers();
 	for (let li = 1;li < nLayers;++li) {
+		const numBackEdges = nn.getNodesAtLayer(li-1).length;
+
 		const l_nodes = nn.getNodesAtLayer(li);
 		const l_stats = nn.getStatsAtLayer(li);
 		const nNodes = l_nodes.length;
+
+		const alpha_denom = Math.max(1, Math.log(numBackEdges));
+
 		for (let i = 0;i < nNodes;++i) {
 			const nd = l_nodes[i];
 			nd.backwards.forEach(edge => {
 				const destNode = edge.originNode;
 				const w_ratio = Math.abs(edge.weight) / l_stats.weightMax;
-				const wAlpha = w_ratio * 0.5;
+				const wAlpha = w_ratio / alpha_denom;
 
 				g.lineWidth = pixelRatio;
-				g.strokeStyle = `hsla(${ 240-Math.floor(240*w_ratio) },90%,50%,${0.03+wAlpha})`;
+				g.strokeStyle = `hsla(${ 260-Math.floor(200*w_ratio) },90%,50%,${0.03+wAlpha})`;
 				g.beginPath();
 				g.moveTo(nd.viz.sx, nd.viz.sy);
 				g.lineTo(destNode.viz.sx, destNode.viz.sy);
@@ -702,6 +738,8 @@ function renderEdges(g, w, h, pixelRatio, nn) {
 			});
 		}
 	}
+
+	g.restore();
 }
 
 function renderConstantNode(g, cx, cy, size, pixelRatio, label) {

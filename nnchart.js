@@ -1,5 +1,7 @@
 "use strict";
 
+const kEColor = "#F55";
+
 class NNErrorLogChart {
 	constructor(width, height, pixelRatio, nSeries) {
 		const LPAD = 20;
@@ -49,7 +51,7 @@ class NNErrorLogChart {
 		this.drawMidScale(g, h, 0.4, w, pr);
 		this.drawMidScale(g, h, 0.6, w, pr);
 
-		g.fillStyle = "#888";
+		g.fillStyle = "#eee";
 		this.drawXaxis(g, h-this.bottomPadding, w, pr);
 		this.drawYaxis(g, this.leftPadding, h, pr);
 		this.drawTitle(g, w, h, pr);
@@ -60,10 +62,10 @@ class NNErrorLogChart {
 	plotAll(g, canvasWidth, canvasHeight, pixelRatio) {
 		const lastIndex = this.seriesList.length-1;
 		let i = 0;
-		g.fillStyle = "#C00";
+		g.fillStyle = kEColor;
 		for (const sr of this.seriesList) {
 			const isLast = (i === lastIndex);
-			g.strokeStyle = isLast ? "#C00" : "#DBB";
+			g.strokeStyle = isLast ? kEColor : "#955";
 			g.lineWidth = isLast ? pixelRatio*2 : pixelRatio;
 			this.plotSeries(g, canvasWidth, canvasHeight, pixelRatio, sr, isLast);
 			++i;
@@ -153,12 +155,17 @@ class LearningThrobber {
 		this.addImage("./images/bb1.png");
 		this.addImage("./images/bb2.png");
 		this.addImage("./images/bb0.png");
+		this.addImage("./images/bb3.png", "throbber-sweat-3");
 
 		this.caption = document.createElement("span");
 		this.caption.className = "throbber-caption";
 		this.element.appendChild(this.caption);
 
 		this.nowReady();
+	}
+
+	setPanic(level) {
+		this.element.dataset.panic = level;
 	}
 
 	setGlitter(type) {
@@ -169,19 +176,26 @@ class LearningThrobber {
 		this.showDefaultFrame();
 		this.caption.innerHTML = "Ready";
 		this.setGlitter(0);
+		this.setPanic(0);
 	}
 
 	nowComplete() {
 		this.showDefaultFrame();
 		this.caption.innerHTML = "Complete!";
 		this.setGlitter(1);
+		this.setPanic(0);
 	}
 
-	addImage(url) {
+	addImage(url, additionalClassName) {
+		let cls = "learning-throbber";
+		if (additionalClassName) {
+			cls += " " + additionalClassName;
+		}
+
 		const index = this.imageList.length;
 		const img = document.createElement("img");
 		img.src = url;
-		img.className = "learning-throbber";
+		img.className = cls;
 		img.style.zIndex = index;
 
 		this.imageList.push(img);
@@ -249,6 +263,47 @@ class ButtonManager {
 	}
 }
 
+class TabPager {
+	constructor(container_id) {
+		const containerElement = document.getElementById(container_id);
+		this.tabElements = [];
+		this.pageElements = [];
+
+		this.scan(containerElement);
+	}
+
+	scan(containerElement) {
+		const tabstrip = containerElement.getElementsByClassName("pager-tab");
+		const pages = containerElement.getElementsByClassName("paged-content");
+
+		this.pushChildElements(this.tabElements, tabstrip[0], "li").forEach( (li, li_index) => {
+			li.addEventListener("click", this.onTabClick.bind(this, li, li_index));
+		} );
+	}
+
+	pushChildElements(outArray, parent, tagName) {
+		const ls = parent.getElementsByTagName(tagName);
+		const n = ls.length;
+		for (let i = 0;i < n;++i) {
+			outArray.push(ls[i]);
+		}
+
+		return outArray;
+	}
+
+	selectByIndex(selIndex) {
+		const n = this.tabElements.length;
+		for (let i = 0;i < n;++i) {
+			const sel_flag = (i === selIndex) ? 1 : 0;
+			this.tabElements[i].dataset.selected = sel_flag;
+		}
+	}
+
+	onTabClick(_element, index, _e) {
+		this.selectByIndex(index);
+	}
+}
+
 function get_button_command(el) { return el.dataset.command; }
 
-export { NNErrorLogChart, LearningThrobber, ButtonManager };
+export { NNErrorLogChart, LearningThrobber, ButtonManager, TabPager };
