@@ -161,6 +161,13 @@ class LearningThrobber {
 		this.caption.className = "throbber-caption";
 		this.element.appendChild(this.caption);
 
+		this.popout = document.createElement("span");
+		this.popout.className = "result-popout-outer";
+		this.element.appendChild(this.popout);
+
+		this.popoutLabel = document.createElement("span");
+		this.popout.appendChild(this.popoutLabel);
+
 		this.nowReady();
 	}
 
@@ -175,11 +182,16 @@ class LearningThrobber {
 		this.caption.dataset.glitter = type;
 	}
 
+	setPopout(level) {
+		this.element.dataset.popout = level;
+	}
+
 	nowReady() {
 		this.showDefaultFrame();
 		this.caption.innerHTML = "Ready";
 		this.setGlitter(0);
 		this.setPanic(0);
+		this.setPopout(0);
 	}
 
 	nowComplete() {
@@ -187,6 +199,23 @@ class LearningThrobber {
 		this.caption.innerHTML = "Complete!";
 		this.setGlitter(1);
 		this.setPanic(0);
+		this.setPopout(0);
+	}
+
+	nowInferred(label, ambiguous) {
+		this.showDefaultFrame();
+		this.caption.innerHTML = "Inferred.";
+		this.setGlitter(0);
+		this.setPanic(0);
+
+		if (ambiguous) {
+			label += "…?";
+		}
+
+		this.setPopout(0);
+		this.popoutLabel.innerHTML = "";
+		this.popoutLabel.appendChild( document.createTextNode(label) );
+		setTimeout( () => { this.setPopout(ambiguous ? 2 : 1); } , 20);
 	}
 
 	addImage(url, additionalClassName) {
@@ -219,6 +248,7 @@ class LearningThrobber {
 		this.toggleAnimation(1, 1);
 		this.caption.innerHTML = "Learning...";
 		this.setGlitter(2);
+		this.setPopout(0);
 	}
 
 	toggleVisibility(index, visible) {

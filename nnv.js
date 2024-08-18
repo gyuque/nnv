@@ -8,6 +8,9 @@ const NT_Constant = 0x10;
 const VARINIT_M  = 1;
 const VARINIT_MM = 2;
 
+const NNMODE_LEARN = 0;
+const NNMODE_USE   = 1;
+
 class NeuralNetwork {
 	constructor(nAllLayers, learningRate, numOfSamples) {
 		if ( !Number.isSafeInteger(nAllLayers) ) {
@@ -21,6 +24,8 @@ class NeuralNetwork {
 		if ( !Number.isSafeInteger(numOfSamples) ) {
 			throw new Error("Bad numOfSamples:", numOfSamples);
 		}
+
+		this.mode = NNMODE_LEARN;
 
 		this.learningRate = learningRate;
 		this.layerList = new Array(nAllLayers);
@@ -38,6 +43,10 @@ class NeuralNetwork {
 		}
 	}
 
+	setMode(m) {
+		this.mode = m;
+	}
+
 	forEachTrainDataSample(fn) {
 		return this.trainDataList.forEach(fn);
 	}
@@ -45,6 +54,18 @@ class NeuralNetwork {
 	forEachNodeAtLayer(i, fn) {
 		if (i < 0) { i = this.layerList.length - 1; }
 		this.layerList[i].nodes.forEach(fn);
+	}
+
+	reportInferenceResult() {
+		const copied = [];
+		this.forEachNodeAtLayer(-1, (node, _nodeIndex) => { copied.push(node); });
+		copied.sort( (a, b) => { return b.outValue - a.outValue; } );
+
+		return {
+			firstNode: copied[0] || null,
+			secondNode: copied[1] || null,
+			allSorted: copied
+		};
 	}
 
 	setClassificationTrainData(sampleIndex, inArray, outClassIndex) {
@@ -604,7 +625,7 @@ function renderNodes(g, w, h, pixelRatio, nn) {
 					g.stroke();
 
 					if (nd.type === NT_Output) {
-						renderOutputMeter(g, nd, radius, pixelRatio, l_stats);
+						renderOutputMeter(g, nd, radius, pixelRatio, l_stats, nn.mode);
 					}
 				}
 
@@ -634,7 +655,7 @@ function renderNodeLabel(g, x, y, text, pixelRatio) {
 	g.restore();
 }
 
-function renderOutputMeter(g, node, nodeRadius, pixelRatio, layerStats) {
+function renderOutputMeter(g, node, nodeRadius, pixelRatio, layerStats, nnMode) {
 	const v = node.viz;
 
 	g.save();
@@ -652,9 +673,12 @@ function renderOutputMeter(g, node, nodeRadius, pixelRatio, layerStats) {
 	const absError = Math.abs(node.error);
 	const ex = (w/2) * Math.min(ratio, exRatio);
 
-	renderMeter(g, ox, oy-h*2 - pixelRatio*2, w, h*2, ratio, mcolor, node.outValue, pixelRatio);
-	renderMeter(g, ox, oy     + pixelRatio*2, w, h*2, exRatio, "#EB0", node.expectedValue, pixelRatio);
-	renderMeter(g, ox, oy     - pixelRatio  , w, pixelRatio*2, absError/xvMax, "#C00", "", pixelRatio, ex);
+	const resY = (nnMode === NNMODE_LEARN) ? (oy-h*2 - pixelRatio*2) : (oy-h);
+	renderMeter(    g, ox, resY                 , w, h*2, ratio, mcolor, node.outValue, pixelRatio);
+	if (nnMode === NNMODE_LEARN) {
+		renderMeter(g, ox, oy     + pixelRatio*2, w, h*2, exRatio, "#EB0", node.expectedValue, pixelRatio);
+		renderMeter(g, ox, oy     - pixelRatio  , w, pixelRatio*2, absError/xvMax, "#C00", "", pixelRatio, ex);
+	}
 
 	g.restore();
 }
@@ -777,4 +801,4 @@ function raise_by_log(raw) {
 }
 */
 
-export { NeuralNetwork, NNNode, NNConnection, buildNetwork, renderNetwork };
+export { NeuralNetwork, NNNode, NNConnection, buildNetwork, renderNetwork, NNMODE_LEARN, NNMODE_USE };

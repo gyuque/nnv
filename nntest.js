@@ -1,6 +1,7 @@
 "use strict";
+import { setupInputArea } from "./datainput.js";
 import { ButtonManager, LearningThrobber, NNErrorLogChart, TabPager } from "./nnchart.js";
-import { buildNetwork, renderNetwork } from "./nnv.js";
+import { buildNetwork, NNMODE_LEARN, NNMODE_USE, renderNetwork } from "./nnv.js";
 
 const TestNN = {
 	LayersConfig: [
@@ -45,6 +46,8 @@ window.launch = function() {
 	theControlTabPager.selectByIndex(0);
 
 	showTrainDataPreview("train-data-preview", TRAIN_DATA_1);
+
+	setupInputArea("data-input-pane", onExecuteInferenceClick);
 };
 
 function resetNN() {
@@ -126,6 +129,8 @@ function enterFrame() {
 }
 
 function onCommandButtonClick(_manager, _button, command) {
+	theNN.setMode(NNMODE_LEARN);
+
 	switch(command) {
 		case 'r':
 			resetNN();
@@ -208,4 +213,22 @@ function showTrainDataPreview(container_id, dataList) {
 
 		++count;
 	}
+}
+
+function onExecuteInferenceClick(inputData) {
+	const inLayerNodes = theNN.getNodesAtLayer(0);
+	const n = inLayerNodes.length;
+	for (let i = 0;i < n;++i) {
+		inLayerNodes[i].outValue = inputData.data[i] || 0;
+	}
+
+	theNN.setMode(NNMODE_USE);
+	theNN.doForwardPropagation();
+
+	const cv = document.getElementById("cv");
+	renderNetwork(cv, theNN, window.devicePixelRatio);
+
+	const report = theNN.reportInferenceResult();
+	const ambiguous = report.secondNode.outValue / report.firstNode.outValue;
+	theThrobber.nowInferred(report.firstNode.label, ambiguous > 0.6);
 }
