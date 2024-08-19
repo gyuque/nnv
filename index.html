@@ -2,7 +2,7 @@
 <html lang="ja">
 	<head>
 		<meta charset="utf-8">
-		<title>AI &lt;( '-')&gt;</title>
+		<title>Blobcat NN</title>
 		<link rel="stylesheet" href="./css/nnv.css">
 		<script src="train-data.js"></script>
 
@@ -11,6 +11,7 @@
 		<script type="module" src="nntest.js"></script>
 	</head>
 	<body onload="void launch()">
+		<h1><img alt="・w・" src="./images/bcicon.png" width="48px" height="48px">Blobcat NN</h1>
 		<table><tbody>
 			<tr>
 				<td class="control-col" id="controller-container">
@@ -22,18 +23,20 @@
 						<div class="paged-content">
 							<fieldset id="train-data-preview">
 								<legend>Training data</legend>
+								<div id="data-preview-items"></div>
+								<label id="data-aug-label"><input type="checkbox" id="data-aug-checkbox" name="train-data-arg">Augment</label>
 							</fieldset>
 
 							<fieldset>
 								<legend>Learning rate</legend>
-								<input id="param-lr" type="number" step="0.001" max="1" min="0.001" value="0.03">
+								<input id="param-lr" type="number" step="0.001" max="1" min="0.001" value="0.04">
 							</fieldset>
 							<fieldset>
 								<legend>Completion threshold</legend>
-								<input id="param-cth" type="number" step="0.0001" max="1" min="0.0001" value="0.001">
+								<input id="param-cth" type="number" step="0.0001" max="1" min="0.0001" value="0.003">
 							</fieldset>
 							<div id="control-button-container">
-								<button data-command="r" style="color: #FFF" title="Rebuild" class="btn-type-destructive">↻</button>&nbsp;
+								<span id="rebuild-button-outer"><button data-command="r" style="color: #FFF" title="Rebuild" class="btn-type-destructive">↻</button></span>&nbsp;
 								<button data-command="x" style="color: #FFF" title="Start learning" class="btn-type-execution">▶</button>
 								<button data-command="p" style="background-color: #394; color: #FFF" title="Pause">⏸</button>
 							</div>
@@ -51,5 +54,8 @@
 				</td>
 			</tr>
 		</tbody></table>
+		<address>
+			Satoshi UEYAMA 2024 │ Source code is available in <a href="https://github.com/gyuque/nnv" target="_blank">GitHub</a> under the GPL │ Know <a href="https://gitlab.com/iNewHorizons/blobtoolkit" target="_blank">Blob</a>
+		</address>
 	</body>
 </html>

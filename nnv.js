@@ -11,6 +11,9 @@ const VARINIT_MM = 2;
 const NNMODE_LEARN = 0;
 const NNMODE_USE   = 1;
 
+const NNAUG_NONE     = 0;
+const NNAUG_2DTRANS  = 1;
+
 class NeuralNetwork {
 	constructor(nAllLayers, learningRate, numOfSamples) {
 		if ( !Number.isSafeInteger(nAllLayers) ) {
@@ -69,8 +72,11 @@ class NeuralNetwork {
 	}
 
 	setClassificationTrainData(sampleIndex, inArray, outClassIndex) {
-		this.trainDataList[sampleIndex].inValues = inArray;
-		this.trainDataList[sampleIndex].expectedResult = outClassIndex;
+		const samp = this.trainDataList[sampleIndex];
+		samp.inValues = inArray;
+		samp.expectedResult = outClassIndex;
+
+		return samp;
 	}
 
 	ready() {
@@ -107,7 +113,9 @@ class NeuralNetwork {
 		this.currentSample = samp;
 		const inLayerNodes = this.getNodesAtLayer(0);
 
-		const inA = samp.inValues;
+		samp.applyRandomTranslation();
+
+		const inA = (samp.augMode === NNAUG_2DTRANS) ? samp.modifiedInValues : samp.inValues;
 		const n = inA.length;
 		for (let i = 0;i < n;++i) {
 			inLayerNodes[i].outValue = inA[i];
@@ -303,6 +311,52 @@ class NNSampleData {
 		this.inValues = null;
 		this.expectedResult = null;
 		this.lastErrorAmount = 1;
+
+		this.metadata = {
+			// for 2D Data
+			width: 1,
+			height: 1
+		};
+
+		this.modifiedInValues = null;
+		this.augMode = NNAUG_NONE;
+	}
+
+	applyRandomTranslation() {
+		const rx = Math.random();
+		const ry = Math.random();
+
+		const dx = (rx < 0.33) ? 0 : (rx < 0.66) ? -1 : 1;
+		const dy = (ry < 0.33) ? 0 : (ry < 0.66) ? -1 : 1;
+		this.makeTranslated(dx, dy);
+	}
+
+	makeTranslated(dx, dy) {
+		const w = this.metadata.width;
+		const h = this.metadata.height;
+		this.modifiedInValues = (new Array( this.inValues.length )).fill(0);
+
+		let wpos = 0;
+		for (let y = 0;y < h;++y) {
+			for (let x = 0;x < w;++x) {
+				const nx = x-dx;
+				const ny = y-dy;
+				if (nx < 0 || nx >= w || 
+					ny < 0 || ny >= h) {
+					// ignore
+				} else {
+					const rpos = ny*w + nx;
+					this.modifiedInValues[wpos] = this.inValues[rpos];
+				}
+
+				++wpos;
+			}
+		}
+	}
+
+	set2DMetrics(w, h) {
+		this.metadata.width = w;
+		this.metadata.height = h;
 	}
 }
 
@@ -802,3 +856,4 @@ function raise_by_log(raw) {
 */
 
 export { NeuralNetwork, NNNode, NNConnection, buildNetwork, renderNetwork, NNMODE_LEARN, NNMODE_USE };
+export { NNAUG_NONE, NNAUG_2DTRANS };

@@ -6,8 +6,34 @@ body,html {
 	background-color: #333;
 }
 
+h1 {
+	margin-left: calc( 50% - 500px );
+	margin-right: 0;
+	margin-top: 0;
+	margin-bottom: 0;
+	color: #666;
+	height: 40px;
+	font-size: 30px;
+	padding: 0 0 40px 0;
+	margin-top: calc( 50vh - 250px - 80px);
+	font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+h1 img {
+	vertical-align: middle;
+}
+
+address {
+	padding-top: 1em;
+	font-size: 75%;
+	font-style: normal;
+	color: #777;
+	text-align: center;
+}
+
+address a { color: #389; }
+
 table {
-	margin-top: calc( 50vh - 250px );
 	margin-left: calc( 50% - 500px );
 	border-collapse: collapse;
 	background-color: #333;
@@ -141,6 +167,15 @@ table {
 	border: 1px solid #888;
 	margin-left: 8px;
 	margin-right: 8px;
+}
+
+#data-aug-label {
+	display: block;
+}
+
+#data-preview-items canvas {
+	image-rendering: crisp-edges;
+	image-rendering: pixelated;
 }
 
 

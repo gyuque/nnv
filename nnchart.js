@@ -171,10 +171,10 @@ class LearningThrobber {
 		this.nowReady();
 	}
 
-	setPanic(level) {
+	setPanic(level, messageIndex) {
 		this.element.dataset.panic = level;
 		if (level > 0) {
-			this.caption.innerHTML = "Oh! busy!";
+			this.caption.innerHTML = messageIndex ? "Too hard!" : "Oh! busy!";
 		}
 	}
 

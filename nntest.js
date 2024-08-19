@@ -1,7 +1,7 @@
 "use strict";
 import { setupInputArea } from "./datainput.js";
 import { ButtonManager, LearningThrobber, NNErrorLogChart, TabPager } from "./nnchart.js";
-import { buildNetwork, NNMODE_LEARN, NNMODE_USE, renderNetwork } from "./nnv.js";
+import { buildNetwork, NNAUG_2DTRANS, NNAUG_NONE, NNMODE_LEARN, NNMODE_USE, renderNetwork } from "./nnv.js";
 
 const TestNN = {
 	LayersConfig: [
@@ -11,8 +11,9 @@ const TestNN = {
 	],
 
 	Initialization: {
-		// ======= Number of training data =======
+		// ======= Information of training data =======
 		numOfSamples: 50,
+		augmentation: NNAUG_NONE,
 
 		// ======= Weight initialization =======
 		// M:  V = 2/M
@@ -21,10 +22,10 @@ const TestNN = {
 		randomFunc: "uniform",
 
 		// ======= Learning rate =======
-		learningRate: 0.03,
+		learningRate: 0.04,
 
 		// ======= Completion threshold =======
-		completionThreshold: 0.001
+		completionThreshold: 0.003
 	}
 };
 
@@ -45,7 +46,7 @@ window.launch = function() {
 	theControlTabPager = new TabPager("pages-container");
 	theControlTabPager.selectByIndex(0);
 
-	showTrainDataPreview("train-data-preview", TRAIN_DATA_1);
+	showTrainDataPreview("data-preview-items", TRAIN_DATA_1);
 
 	setupInputArea("data-input-pane", onExecuteInferenceClick);
 };
@@ -57,7 +58,10 @@ function resetNN() {
 	const nn = buildNetwork(TestNN);
 
 	for (let i = 0;i < TestNN.Initialization.numOfSamples;++i) {
-		nn.setClassificationTrainData(i, TRAIN_DATA_1[i].data, i % 10);
+		const src = TRAIN_DATA_1[i];
+		const samp = nn.setClassificationTrainData(i, src.data, i % 10);
+		samp.set2DMetrics(src.width, src.height);
+		samp.augMode = TestNN.Initialization.augmentation;
 	}
 
 	// Set output label
@@ -114,8 +118,11 @@ function enterFrame() {
 
 	updateIterationCounter(theNN.iterationCount);
 
-	if (currentFrameCount === 190) {
-		theThrobber.setPanic(1);
+	const cycle = (currentFrameCount % 400);
+	if (cycle === 195) {
+		theThrobber.setPanic(1, 0);
+	} else if (cycle === 395) {
+		theThrobber.setPanic(1, 1);
 	}
 
 	if (theNN.lastTotalError <= TestNN.Initialization.completionThreshold) {
@@ -154,13 +161,21 @@ function onCommandButtonClick(_manager, _button, command) {
 function pickParams() {
 	TestNN.Initialization.learningRate = pickNumericInput("param-lr");
 	TestNN.Initialization.completionThreshold = pickNumericInput("param-cth");
+	const aug = pickCheckboxInput("data-aug-checkbox") ? NNAUG_2DTRANS : NNAUG_NONE;
+	TestNN.Initialization.augmentation = aug;
 	console.log("Set learningRate to ", TestNN.Initialization.learningRate);
 	console.log("Set completionThreshold to ", TestNN.Initialization.completionThreshold);
+	console.log("Set augmentation mode to ", (aug === NNAUG_2DTRANS) ? "[2D translation]" : "[none]");
 }
 
 function pickNumericInput(id) {
 	const el = document.getElementById(id);
 	return parseFloat(el.value);
+}
+
+function pickCheckboxInput(id) {
+	const el = document.getElementById(id);
+	return el.checked;
 }
 
 function stopLearning(complete) {
