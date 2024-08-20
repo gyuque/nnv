@@ -31,6 +31,7 @@ class NeuralNetwork {
 		this.mode = NNMODE_LEARN;
 
 		this.learningRate = learningRate;
+		this.momentum = 0;
 		this.layerList = new Array(nAllLayers);
 		for (let i = 0;i < nAllLayers;++i) {
 			this.layerList[i] = createLayerMetadata();
@@ -170,7 +171,7 @@ class NeuralNetwork {
 	}
 
 	updateWeights() {
-		this.forAllBackEdge( endNode => endNode.updateBackEdgeWeights(this.learningRate, this.numOfSamples) );
+		this.forAllBackEdge( endNode => endNode.updateBackEdgeWeights(this.learningRate, this.numOfSamples, this.momentum) );
 	}
 
 	forAllBackEdge(fn) {
@@ -427,9 +428,12 @@ class NNNode {
 		}
 	}
 
-	updateBackEdgeWeights(learningRate, numOfSamples) {
+	updateBackEdgeWeights(learningRate, numOfSamples, momentum) {
 		for (const e of this.backwards) {
-			e.weight -= learningRate * (e.dE / numOfSamples);
+			const ch = -learningRate * (e.dE / numOfSamples) + e.prevChange*momentum;
+			e.weight += ch;
+
+			e.prevChange = ch;
 		}
 	}
 
@@ -492,6 +496,7 @@ class NNConnection {
 		this.destNode = null;
 		this.weight = 1;
 		this.dE = 0;
+		this.prevChange = 0;
 
 		this.inValue = 0;
 	}
@@ -551,6 +556,7 @@ function buildNetwork(src) {
 	const iLast = nAllLayers - 1;
 
 	const aNN = new NeuralNetwork(nAllLayers, ini.learningRate, ini.numOfSamples);
+	aNN.momentum = ini.momentum || 0;
 
 	for (let li = 0;li < nAllLayers;++li) {
 		const conf = lyrConfigs[li];
@@ -578,12 +584,20 @@ function buildNetwork(src) {
 
 // Visualization
 
-function renderNetwork(canvas, nn, pixelRatio) {
+function renderNetwork(canvasSet, nn, pixelRatio) {
+	const canvas = canvasSet[1];
 	const w = canvas.width - 0;
 	const h = canvas.height - 0;
 
+	const backCanvas = canvasSet[0];
+	const bw = backCanvas.width - 0;
+	const bh = backCanvas.height - 0;
+
 	const g = canvas.getContext("2d");
 	g.clearRect(0, 0, w, h);
+
+	const bg = backCanvas.getContext("2d");
+	bg.clearRect(0, 0, bw, bh);
 	
 	const nLayers = nn.countLayers();
 	const segWidth = Math.floor(w / (nLayers+1));
@@ -615,7 +629,7 @@ function renderNetwork(canvas, nn, pixelRatio) {
 		x += segWidth;
 	}
 
-	renderEdges(g, w, h, pixelRatio, nn);
+	renderEdges(bg, bw, bh, bw/w, nn);
 	renderNodes(g, w, h, pixelRatio, nn);
 }
 
@@ -786,7 +800,7 @@ function render2DNode(g, node, pixelRatio) {
 	}
 }
 
-function renderEdges(g, w, h, pixelRatio, nn) {
+function renderEdges(g, w, h, renderScale, nn) {
 	g.save();
 	g.globalCompositeOperation = "lighter";
 
@@ -807,11 +821,11 @@ function renderEdges(g, w, h, pixelRatio, nn) {
 				const w_ratio = Math.abs(edge.weight) / l_stats.weightMax;
 				const wAlpha = w_ratio / alpha_denom;
 
-				g.lineWidth = pixelRatio;
+				g.lineWidth = 1;
 				g.strokeStyle = `hsla(${ 260-Math.floor(200*w_ratio) },90%,50%,${0.03+wAlpha})`;
 				g.beginPath();
-				g.moveTo(nd.viz.sx, nd.viz.sy);
-				g.lineTo(destNode.viz.sx, destNode.viz.sy);
+				g.moveTo(nd.viz.sx * renderScale, nd.viz.sy * renderScale);
+				g.lineTo(destNode.viz.sx * renderScale, destNode.viz.sy * renderScale);
 				g.stroke();
 			});
 		}

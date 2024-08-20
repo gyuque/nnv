@@ -11,7 +11,7 @@
 		<script type="module" src="nntest.js"></script>
 	</head>
 	<body onload="void launch()">
-		<h1><img alt="・w・" src="./images/bcicon.png" width="48px" height="48px">Blobcat NN</h1>
+		<h1><img alt="・w・" src="./images/bcicon.png" width="48" height="48">Blobcat NN</h1>
 		<table><tbody>
 			<tr>
 				<td class="control-col" id="controller-container">
@@ -20,26 +20,28 @@
 							<li>Learn</li>
 							<li>Test</li>
 						</ol>
-						<div class="paged-content">
+						<div class="paged-content" id="configuration-pane">
 							<fieldset id="train-data-preview">
 								<legend>Training data</legend>
 								<div id="data-preview-items"></div>
-								<label id="data-aug-label"><input type="checkbox" id="data-aug-checkbox" name="train-data-arg">Augment</label>
+								<label id="data-aug-label"><input onchange="void onAnyInputChange()" type="checkbox" id="data-aug-checkbox" name="train-data-arg">Augment</label>
 							</fieldset>
 
-							<fieldset>
-								<legend>Learning rate</legend>
-								<input id="param-lr" type="number" step="0.001" max="1" min="0.001" value="0.04">
-							</fieldset>
-							<fieldset>
-								<legend>Completion threshold</legend>
-								<input id="param-cth" type="number" step="0.0001" max="1" min="0.0001" value="0.003">
+							<fieldset id="params-fieldset">
+								<legend>Parameters</legend>
+								<label>Learning rate<br>
+									<input onkeyup="void onAnyInputChange()" onchange="void onAnyInputChange()" id="param-lr" type="number" step="0.001" max="1" min="0.001" value="0.04"></label>
+								<label>Momentum<br>
+									<input onkeyup="void onAnyInputChange()" onchange="void onAnyInputChange()" id="param-mom" type="number" step="0.1" max="0.9" min="0" value="0"></label>
+								<label>Completion threshold<br>
+									<input onkeyup="void onAnyInputChange()" onchange="void onAnyInputChange()" id="param-cth" type="number" step="0.0001" max="1" min="0.0001" value="0.003"></label>
 							</fieldset>
 							<div id="control-button-container">
-								<span id="rebuild-button-outer"><button data-command="r" style="color: #FFF" title="Rebuild" class="btn-type-destructive">↻</button></span>&nbsp;
+								<span id="rebuild-button-outer"><button data-command="r" style="color: #FFF" title="Rebuild" class="btn-type-destructive">↻</button><span class="notification-dot">!</span></span>&nbsp;
 								<button data-command="x" style="color: #FFF" title="Start learning" class="btn-type-execution">▶</button>
 								<button data-command="p" style="background-color: #394; color: #FFF" title="Pause">⏸</button>
 							</div>
+							<div class="dirty-warning">⚠ Rebuild to apply.</div>
 						</div>
 						<div id="data-input-pane" class="paged-content">
 							<h3><img alt="" src="./images/pen.png" width="16" height="16">Handwriting</h3>
@@ -47,7 +49,7 @@
 					</div>
 				</td>
 				<td>
-					<div id="fig-container"><canvas id="cv" width="1400" height="1000"></canvas></div>
+					<div id="fig-container"><canvas id="back-cv" width="700" height="500"></canvas><canvas id="cv" width="1400" height="1000"></canvas></div>
 				</td>
 				<td class="stats-col" id="elog-container">
 					

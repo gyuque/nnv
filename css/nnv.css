@@ -7,7 +7,7 @@ body,html {
 }
 
 h1 {
-	margin-left: calc( 50% - 500px );
+	margin-left: calc( 50% - 530px );
 	margin-right: 0;
 	margin-top: 0;
 	margin-bottom: 0;
@@ -34,17 +34,33 @@ address {
 address a { color: #389; }
 
 table {
-	margin-left: calc( 50% - 500px );
+	margin-left: calc( 50% - 530px );
 	border-collapse: collapse;
 	background-color: #333;
 	color: #eee;
 }
 
-#cv {
+#fig-container {
+	position: relative;
+	width: 700px;
+	height: 500px;
+}
+
+#fig-container canvas {
 	display: inline-block;
 	width: 700px;
 	height: 500px;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+#back-cv {
 	background-color: #333;
+	z-index: 1;
+}
+#cv {
+	z-index: 2;
 }
 
 .iteration-counter {
@@ -61,7 +77,7 @@ table {
 .control-col {
 	padding-left: 5px;
 	padding-right: 5px;
-	width: 170px;
+	width: 230px;
 	text-align: center;
 	vertical-align: top;
 	background-color: #444;
@@ -79,7 +95,8 @@ table {
 	overflow: visible;
 }
 
-.learning-throbber {
+.learning-throbber,
+.learning-throbber img {
 	width: 64px;
 	height: 64px;
 	position: absolute;
@@ -169,8 +186,23 @@ table {
 	margin-right: 8px;
 }
 
-#data-aug-label {
+#configuration-pane label {
 	display: block;
+	font-size: 12px;
+}
+
+#configuration-pane label input {
+	vertical-align: -7%;
+}
+
+#configuration-pane #params-fieldset label {
+	font-size: 10px;
+	margin-top: 2px;
+	margin-bottom: 3px;
+}
+
+#params-fieldset {
+	text-align: left;
 }
 
 #data-preview-items canvas {
@@ -224,6 +256,42 @@ table {
 	background-color: #29C;
 }
 
+#rebuild-button-outer {
+	position: relative;
+}
+
+#rebuild-button-outer .notification-dot {
+	font-size: 9px;
+	line-height: 6px;
+	width: 8px;
+	height: 8px;
+	position: absolute;
+	top: -14px;
+	left: -5px;
+	background-color: #FA0;
+	color: #000;
+	padding: 4px 3px 2px 3px;
+	border-radius: 12px;
+	font-weight: bold;
+	font-family: 'Courier New', Courier, monospace;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+	display: none;
+}
+
+.dirty-warning {
+	font-size: 11px;
+	padding-top: 3px;
+	color: #FA0;
+	display: none;
+}
+
+[data-dirty="1"] #rebuild-button-outer .notification-dot {
+	display: inline-block;
+}
+[data-dirty="1"] .dirty-warning {
+	display: block;
+}
+
 @keyframes glitter {
 	0% {
 		background-position: -200px 50%;
@@ -259,7 +327,7 @@ table {
 
 #train-data-preview canvas {
 	margin-left: 1px;
-	margin-right: 1px;
+	margin-right: 0;
 }
 
 @keyframes sweat1 {
@@ -306,6 +374,17 @@ table {
 
 [data-panic="1"] .throbber-sweat-3 {
 	display: inline-block;
+}
+
+.throbber-shade {
+	transition-property: opacity;
+	transition-duration: 3s;
+	transition-timing-function: linear;
+	opacity: 0;
+}
+
+[data-panic="1"] .throbber-shade {
+	opacity: 1;
 }
 
 /* paged */
@@ -357,6 +436,7 @@ table {
 
 #data-input-pane h3 {
 	font-size: 12px;
+	margin-top: 2em;
 }
 
 #data-input-pane h3 img {

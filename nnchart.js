@@ -153,7 +153,10 @@ class LearningThrobber {
 		this.imageList = [];
 
 		this.addImage("./images/bb1.png");
-		this.addImage("./images/bb2.png");
+		this.addMultipleImage(
+			["./images/bb2.png", "./images/bb-shade.png"],
+			(img, i) => { if(i===1){ img.className="throbber-shade" } }
+		);
 		this.addImage("./images/bb0.png");
 		this.addImage("./images/bb3.png", "throbber-sweat-3");
 
@@ -218,20 +221,38 @@ class LearningThrobber {
 		setTimeout( () => { this.setPopout(ambiguous ? 2 : 1); } , 20);
 	}
 
+	addMultipleImage(urlList, callback) {
+		const container = this.addFrameElement("span");
+		const n = urlList.length;
+		for (let i = 0;i < n;++i) {
+			const img = document.createElement("img");
+			img.src = urlList[i];
+			container.appendChild(img);
+
+			if (callback) {
+				callback(img, i);
+			}
+		}
+	}
+
 	addImage(url, additionalClassName) {
+		const img = this.addFrameElement("img", additionalClassName);
+		img.src = url;
+	}
+
+	addFrameElement(tagName, additionalClassName) {
 		let cls = "learning-throbber";
 		if (additionalClassName) {
 			cls += " " + additionalClassName;
 		}
 
-		const index = this.imageList.length;
-		const img = document.createElement("img");
-		img.src = url;
-		img.className = cls;
-		img.style.zIndex = index;
+		const el = document.createElement(tagName);
+		el.className = cls;
+		el.style.zIndex = this.imageList.length;
 
-		this.imageList.push(img);
-		this.element.appendChild(img);
+		this.element.appendChild(el);
+		this.imageList.push(el);
+		return el;
 	}
 
 	showDefaultFrame() {

@@ -23,6 +23,7 @@ const TestNN = {
 
 		// ======= Learning rate =======
 		learningRate: 0.04,
+		momentum: 0,
 
 		// ======= Completion threshold =======
 		completionThreshold: 0.003
@@ -38,7 +39,12 @@ var currentFrameCount = 0;
 var gIterationCountDisplay = null;
 var gAnimationActive = false;
 
+const canvasSet = [null, null];
+
 window.launch = function() {
+	canvasSet[0] = document.getElementById("back-cv");
+	canvasSet[1] = document.getElementById("cv");
+
 	resetNN();
 	theControlButtons = new ButtonManager("control-button-container", onCommandButtonClick);
 	theControlButtons.setDisabled("p", true);
@@ -54,7 +60,6 @@ window.launch = function() {
 function resetNN() {
 	pickParams();
 
-	const cv = document.getElementById("cv");
 	const nn = buildNetwork(TestNN);
 
 	for (let i = 0;i < TestNN.Initialization.numOfSamples;++i) {
@@ -69,7 +74,7 @@ function resetNN() {
 
 	theNN = nn.ready();
 	setupCharts(document.getElementById("elog-container"), TestNN.Initialization.numOfSamples);
-	renderNetwork(cv, theNN, window.devicePixelRatio);
+	renderNetwork(canvasSet, theNN, window.devicePixelRatio);
 
 	currentFrameCount = 0;
 }
@@ -98,15 +103,14 @@ function updateIterationCounter(i) {
 }
 
 function enterFrame() {
-	const cv = document.getElementById("cv");
-	for (let i = 0;i < 49;++i) {
+	for (let i = 0;i < 24;++i) {
 		theNN.advanceLearning();
 	}
 	const showSampleIndex = Math.floor(currentFrameCount / 6) % TestNN.Initialization.numOfSamples;
 	theNN.advanceLearning( (nn, sampleIndex) => {
 		if (sampleIndex === showSampleIndex) {
 			nn.doForwardPropagation();
-			renderNetwork(cv, nn, window.devicePixelRatio);
+			renderNetwork(canvasSet, nn, window.devicePixelRatio);
 		}
 	} );
 
@@ -118,10 +122,10 @@ function enterFrame() {
 
 	updateIterationCounter(theNN.iterationCount);
 
-	const cycle = (currentFrameCount % 400);
-	if (cycle === 195) {
+	const cycle = (currentFrameCount % 800);
+	if (cycle === 395) {
 		theThrobber.setPanic(1, 0);
-	} else if (cycle === 395) {
+	} else if (cycle === 795) {
 		theThrobber.setPanic(1, 1);
 	}
 
@@ -160,12 +164,19 @@ function onCommandButtonClick(_manager, _button, command) {
 
 function pickParams() {
 	TestNN.Initialization.learningRate = pickNumericInput("param-lr");
+	TestNN.Initialization.momentum = pickNumericInput("param-mom");
 	TestNN.Initialization.completionThreshold = pickNumericInput("param-cth");
-	const aug = pickCheckboxInput("data-aug-checkbox") ? NNAUG_2DTRANS : NNAUG_NONE;
+	const aug = augmentModeFromInput();
 	TestNN.Initialization.augmentation = aug;
 	console.log("Set learningRate to ", TestNN.Initialization.learningRate);
+	console.log("Set momentum to ", TestNN.Initialization.momentum);
 	console.log("Set completionThreshold to ", TestNN.Initialization.completionThreshold);
 	console.log("Set augmentation mode to ", (aug === NNAUG_2DTRANS) ? "[2D translation]" : "[none]");
+	updateDirtyFlag();
+}
+
+function augmentModeFromInput() {
+	return pickCheckboxInput("data-aug-checkbox") ? NNAUG_2DTRANS : NNAUG_NONE;
 }
 
 function pickNumericInput(id) {
@@ -222,7 +233,7 @@ function showTrainDataPreview(container_id, dataList) {
 		g.putImageData(idat, 0, 0);
 
 		containerElement.appendChild(cv);
-		if ((count % 5) === 4) {
+		if ((count % 10) === 9) {
 			containerElement.appendChild(document.createElement("br"));
 		}
 
@@ -240,10 +251,32 @@ function onExecuteInferenceClick(inputData) {
 	theNN.setMode(NNMODE_USE);
 	theNN.doForwardPropagation();
 
-	const cv = document.getElementById("cv");
-	renderNetwork(cv, theNN, window.devicePixelRatio);
+	renderNetwork(canvasSet, theNN, window.devicePixelRatio);
 
 	const report = theNN.reportInferenceResult();
 	const ambiguous = report.secondNode.outValue / report.firstNode.outValue;
 	theThrobber.nowInferred(report.firstNode.label, ambiguous > 0.6);
+}
+
+window.onAnyInputChange = function() {
+	updateDirtyFlag();
+};
+
+function updateDirtyFlag() {
+	const lr = pickNumericInput("param-lr");
+	const cth = pickNumericInput("param-cth");
+	const mom = pickNumericInput("param-mom");
+	const aug = augmentModeFromInput();
+
+	const same = ( nearly_equals(lr, TestNN.Initialization.learningRate) &&
+					nearly_equals(cth, TestNN.Initialization.completionThreshold) &&
+					nearly_equals(mom, TestNN.Initialization.momentum) &&
+					aug === TestNN.Initialization.augmentation);
+	
+	const el = document.getElementById("controller-container");
+	el.dataset.dirty = same ? 0 : 1;
+}
+
+function nearly_equals(a, b) {
+	return Math.abs(a - b) < 0.000001;
 }
