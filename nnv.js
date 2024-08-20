@@ -14,6 +14,38 @@ const NNMODE_USE   = 1;
 const NNAUG_NONE     = 0;
 const NNAUG_2DTRANS  = 1;
 
+// f(u)=u
+// f'(u)=1
+function txf_identity(inVal) { return inVal; }
+function txd_identity(_inVal) { return 1; }
+
+// f(u)=max(0, u)
+// f'(u)= 0 (u<=0) | 1 otherwise
+function txf_ReLU(inVal) { return Math.max(0, inVal); }
+function txd_ReLU(inVal) { return (inVal <= 0) ? 0 : 1; }
+
+function txf_LeakyReLU(inVal) {
+	if (inVal >= 0) { return inVal; }
+	return 0.1 * inVal;
+}
+function txd_LeakyReLU(inVal) {
+	return (inVal < 0) ? 0.1 : 1;
+}
+
+function txf_tanh(inVal) { return Math.tanh(inVal); }
+function txd_tanh(inVal) { 
+	const t = Math.tanh(inVal);
+	return 1.0 - (t*t);
+}
+
+const TransferFunctions = {
+	Identity: [ txf_identity , txd_identity , "i" ],
+	tanh:     [ txf_tanh     , txd_tanh     , "t" ],
+	LeakyReLU:[ txf_LeakyReLU, txd_LeakyReLU, "L" ],
+	ReLU:     [ txf_ReLU     , txd_ReLU     , "R" ]
+};
+
+
 class NeuralNetwork {
 	constructor(nAllLayers, learningRate, numOfSamples) {
 		if ( !Number.isSafeInteger(nAllLayers) ) {
@@ -379,7 +411,11 @@ function createLayerMetadata(options) {
 }
 
 class NNNode {
-	constructor(nType) {
+	constructor(nType, txFuncSet) {
+		if (!txFuncSet) {
+			txFuncSet = TransferFunctions.Identity;
+		}
+
 		this.type = nType || NT_Generic;
 		this.label = null;
 		this.forwards = [];
@@ -388,8 +424,9 @@ class NNNode {
 		this.constantValue = 1;
 
 		this.outValue = 0;
-		this.txFunc = txf_identity;
-		this.txFunc_d = txd_identity;
+		this.txFunc = txFuncSet[0];
+		this.txFunc_d = txFuncSet[1];
+		this.txfLabel = txFuncSet[2];
 		this.inValue = 0;
 
 		this.expectedValue = 0;
@@ -485,11 +522,6 @@ class NNNode {
 	}
 }
 
-// f(u)=u
-// f'(u)=1
-function txf_identity(inVal) { return inVal; }
-function txd_identity(_inVal) { return 1; }
-
 class NNConnection {
 	constructor() {
 		this.originNode = null;
@@ -541,10 +573,10 @@ function calcNumColumns(input_n) {
 	return 1;
 }
 
-function addNewNodes(targetNN, layerIndex, input_n, isResult) {
+function addNewNodes(targetNN, layerIndex, input_n, isResult, txFuncSet) {
 	const n = calcNumOfNodes(input_n);
 	for (let i = 0;i < n;++i) {
-		const node = new NNNode(isResult ? NT_Output : NT_Generic);
+		const node = new NNNode(isResult ? NT_Output : NT_Generic , txFuncSet);
 		targetNN.addNode(node, layerIndex);
 	}
 }
@@ -559,8 +591,14 @@ function buildNetwork(src) {
 	aNN.momentum = ini.momentum || 0;
 
 	for (let li = 0;li < nAllLayers;++li) {
+		let txf = TransferFunctions.Identity;
+
+		if (li > 0 && li < iLast) {
+			txf = ini.transferFunc;
+		}
+
 		const conf = lyrConfigs[li];
-		addNewNodes(aNN, li, conf.n, li === iLast);
+		addNewNodes(aNN, li, conf.n, li === iLast, txf);
 		if (conf.one) {
 			aNN.addOneNode(li);
 		}
@@ -695,6 +733,14 @@ function renderNodes(g, w, h, pixelRatio, nn) {
 					if (nd.type === NT_Output) {
 						renderOutputMeter(g, nd, radius, pixelRatio, l_stats, nn.mode);
 					}
+
+					g.save();
+					g.fillStyle = "#fff";
+					g.font = `bold ${radius}px serif`;
+					g.textAlign = "center";
+					g.textBaseline = "middle";
+					g.fillText(nd.txfLabel, nd.viz.sx, nd.viz.sy);
+					g.restore();
 				}
 
 				if (nd.label) {
@@ -870,4 +916,4 @@ function raise_by_log(raw) {
 */
 
 export { NeuralNetwork, NNNode, NNConnection, buildNetwork, renderNetwork, NNMODE_LEARN, NNMODE_USE };
-export { NNAUG_NONE, NNAUG_2DTRANS };
+export { NNAUG_NONE, NNAUG_2DTRANS, TransferFunctions };

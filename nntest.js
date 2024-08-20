@@ -1,7 +1,7 @@
 "use strict";
 import { setupInputArea } from "./datainput.js";
 import { ButtonManager, LearningThrobber, NNErrorLogChart, TabPager } from "./nnchart.js";
-import { buildNetwork, NNAUG_2DTRANS, NNAUG_NONE, NNMODE_LEARN, NNMODE_USE, renderNetwork } from "./nnv.js";
+import { buildNetwork, NNAUG_2DTRANS, NNAUG_NONE, NNMODE_LEARN, NNMODE_USE, renderNetwork, TransferFunctions } from "./nnv.js";
 
 const TestNN = {
 	LayersConfig: [
@@ -20,6 +20,9 @@ const TestNN = {
 		// MM: V = 2/(M1+M2)
 		denominator: "M",
 		randomFunc: "uniform",
+
+		// ======= Default transfer function for hidden layers =======
+		transferFunc: TransferFunctions.Identity,
 
 		// ======= Learning rate =======
 		learningRate: 0.04,
@@ -163,6 +166,7 @@ function onCommandButtonClick(_manager, _button, command) {
 }
 
 function pickParams() {
+	TestNN.Initialization.transferFunc = pickTransferFuncSelection();
 	TestNN.Initialization.learningRate = pickNumericInput("param-lr");
 	TestNN.Initialization.momentum = pickNumericInput("param-mom");
 	TestNN.Initialization.completionThreshold = pickNumericInput("param-cth");
@@ -187,6 +191,11 @@ function pickNumericInput(id) {
 function pickCheckboxInput(id) {
 	const el = document.getElementById(id);
 	return el.checked;
+}
+
+function pickTransferFuncSelection() {
+	const name = document.getElementById("txfunc-sel").value;
+	return TransferFunctions[name];
 }
 
 function stopLearning(complete) {
@@ -263,6 +272,7 @@ window.onAnyInputChange = function() {
 };
 
 function updateDirtyFlag() {
+	const txf = pickTransferFuncSelection();
 	const lr = pickNumericInput("param-lr");
 	const cth = pickNumericInput("param-cth");
 	const mom = pickNumericInput("param-mom");
@@ -271,7 +281,8 @@ function updateDirtyFlag() {
 	const same = ( nearly_equals(lr, TestNN.Initialization.learningRate) &&
 					nearly_equals(cth, TestNN.Initialization.completionThreshold) &&
 					nearly_equals(mom, TestNN.Initialization.momentum) &&
-					aug === TestNN.Initialization.augmentation);
+					aug === TestNN.Initialization.augmentation) &&
+					txf === TestNN.Initialization.transferFunc;
 	
 	const el = document.getElementById("controller-container");
 	el.dataset.dirty = same ? 0 : 1;
