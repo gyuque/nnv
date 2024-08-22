@@ -283,22 +283,31 @@ class NeuralNetwork {
 	}
 
 	connectAll() {
+		let nConnected = 0;
+
 		const n = this.countLayers() - 1;
 		for (let i = 0;i < n;++i) {
-			this.connectAllAtLayer(i);
+			nConnected += this.connectAllAtLayer(i);
 		}
+
+		return nConnected;
 	}
 
 	connectAllAtLayer(firstLayerIndex) {
+		let nConnected = 0;
+
 		const selfLayer = this.layerList[firstLayerIndex];
 		const nextLayer = this.layerList[firstLayerIndex+1];
 		for (const selfNode of selfLayer.nodes) {
 			for (const nextNode of nextLayer.nodes) {
 				if (nextNode.type !== NT_Constant) {
 					selfNode.connectToForward(nextNode);
+					++nConnected;
 				}
 			}
 		}
+
+		return nConnected;
 	}
 
 	setExpectedClass(raiseIndex) {
@@ -581,7 +590,7 @@ function addNewNodes(targetNN, layerIndex, input_n, isResult, txFuncSet) {
 	}
 }
 
-function buildNetwork(src) {
+function buildNetwork(src, outReport) {
 	const ini = src.Initialization;
 	const lyrConfigs = src.LayersConfig;
 	const nAllLayers = lyrConfigs.length;
@@ -594,7 +603,7 @@ function buildNetwork(src) {
 		let txf = TransferFunctions.Identity;
 
 		if (li > 0 && li < iLast) {
-			txf = ini.transferFunc;
+			txf = txfuncFromStringIf(ini.transferFunc);
 		}
 
 		const conf = lyrConfigs[li];
@@ -607,7 +616,10 @@ function buildNetwork(src) {
 		aNN.setLayerNumColumns(li, calcNumColumns(conf.n));
 	}
 
-	aNN.connectAll();
+	const nGeneratedEdges = aNN.connectAll();
+	if (outReport) {
+		outReport.nEdges = nGeneratedEdges;
+	}
 
 	let vd = VARINIT_M;
 	if (ini.denominator.length === 2) {
@@ -617,6 +629,11 @@ function buildNetwork(src) {
 	aNN.initWeights(vd);
 
 	return aNN;
+}
+
+function txfuncFromStringIf(f) {
+	if (f.apply) { return f; } // f is function object
+	return TransferFunctions[f];
 }
 
 

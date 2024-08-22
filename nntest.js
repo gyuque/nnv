@@ -22,7 +22,7 @@ const TestNN = {
 		randomFunc: "uniform",
 
 		// ======= Default transfer function for hidden layers =======
-		transferFunc: TransferFunctions.Identity,
+		transferFunc: "Identity",
 
 		// ======= Learning rate =======
 		learningRate: 0.04,
@@ -32,6 +32,8 @@ const TestNN = {
 		completionThreshold: 0.003
 	}
 };
+
+var gWorker = null;
 
 var theNN = null;
 var theLogChart = null;
@@ -58,12 +60,30 @@ window.launch = function() {
 	showTrainDataPreview("data-preview-items", TRAIN_DATA_1);
 
 	setupInputArea("data-input-pane", onExecuteInferenceClick);
+
+	gWorker = new Worker("./nn-worker.js", {type: "module", credentials: "omit"});
+	gWorker.onmessage = onWorkerMessage;
 };
+
+function onWorkerMessage(e) {
+	if (e && e.data) {
+		sendNNConfiguration(TestNN);
+	}
+};
+
+function sendNNConfiguration(cf) {
+	gWorker.postMessage({conf: cf});
+}
 
 function resetNN() {
 	pickParams();
 
-	const nn = buildNetwork(TestNN);
+	const b_report = {};
+	const nn = buildNetwork(TestNN, b_report);
+
+	const p_ct = document.getElementById("intl-params-count");
+	p_ct.innerHTML = "";
+	p_ct.appendChild( document.createTextNode(b_report.nEdges+" edge weights") );
 
 	for (let i = 0;i < TestNN.Initialization.numOfSamples;++i) {
 		const src = TRAIN_DATA_1[i];
@@ -194,8 +214,7 @@ function pickCheckboxInput(id) {
 }
 
 function pickTransferFuncSelection() {
-	const name = document.getElementById("txfunc-sel").value;
-	return TransferFunctions[name];
+	return document.getElementById("txfunc-sel").value;
 }
 
 function stopLearning(complete) {
