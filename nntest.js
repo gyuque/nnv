@@ -47,16 +47,45 @@ var gAnimationActive = false;
 var gAnimationStartTime = 0;
 var gLastLossList = null;
 var gLastThrobberChange = -1;
+var gSoundShouldBePlayed = -1;
 
 const canvasSet = [null, null];
+const soundSet = [null, null]
 
 window.launch = function() {
+	setupSounds();
 	canvasSet[0] = document.getElementById("back-cv");
 	canvasSet[1] = document.getElementById("cv");
 
 	gWorker = new Worker("./nn-worker.js", {type: "module", credentials: "omit"});
 	gWorker.onmessage = onWorkerMessage;
 };
+
+function setupSounds() {
+	const a1 = document.createElement("audio");
+	a1.src = "./sound/poku.mp3";
+	soundSet[0] = a1;
+
+	const a2 = document.createElement("audio");
+	a2.src = "./sound/chin.mp3";
+	soundSet[1] = a2;
+
+	setInterval(soundInterval, 500);
+}
+
+function soundInterval() {
+	if (gSoundShouldBePlayed >= 0) {
+		const a = soundSet[gSoundShouldBePlayed];
+		if (a) {
+			a.currentTime = 0;
+			a.play();
+		}
+
+		if (gSoundShouldBePlayed === 1) {
+			gSoundShouldBePlayed = -1;
+		}
+	}
+}
 
 function setupControlUIs() {
 	theControlButtons = new ButtonManager("control-button-container", onCommandButtonClick);
@@ -77,6 +106,7 @@ function onWorkerReady() {
 function resetNN() {
 	gLastLossList = null;
 	gLastThrobberChange = -1;
+	gSoundShouldBePlayed = -1;
 	pickParams();
 
 	const b_report = {};
@@ -211,6 +241,7 @@ function onCommandButtonClick(_manager, _button, command) {
 			if (!gAnimationActive) {
 				theThrobber.showThinkingFrame();
 				gAnimationActive = true;
+				gSoundShouldBePlayed = 0;
 				theControlButtons.setDisabled("x", true);
 				theControlButtons.setDisabled("p", false);
 				sendExecCommand();
@@ -262,6 +293,7 @@ function stopLearning(complete) {
 	gAnimationActive = false;
 	theControlButtons.setDisabled("x", false);
 	theControlButtons.setDisabled("p", true);
+	gSoundShouldBePlayed = complete ? 1 : -1;
 
 	if (complete) {
 		theThrobber.nowComplete();
@@ -396,5 +428,6 @@ function sendExecCommand() {
 }
 
 function sendStopCommand(sendBackParam) {
+	gSoundShouldBePlayed = -1;
 	gWorker.postMessage({stop: true, sendBackParam: sendBackParam});
 }
