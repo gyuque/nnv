@@ -1,7 +1,7 @@
 "use strict";
 import { setupInputArea } from "./datainput.js";
 import { ButtonManager, LearningThrobber, NNErrorLogChart, TabPager } from "./nnchart.js";
-import { buildNetwork, NNAUG_2DTRANS, NNAUG_NONE, NNMODE_LEARN, NNMODE_USE, renderNetwork, TransferFunctions } from "./nnv.js";
+import { buildNetwork, NNAUG_2DTRANS, NNAUG_NONE, NNMODE_LEARN, NNMODE_USE, renderNetwork, setTrainDataset, TransferFunctions } from "./nnv.js";
 
 const TestNN = {
 	LayersConfig: [
@@ -29,7 +29,7 @@ const TestNN = {
 		momentum: 0,
 
 		// ======= Completion threshold =======
-		completionThreshold: 0.003
+		completionThreshold: 0.01
 	}
 };
 
@@ -42,7 +42,11 @@ var theControlTabPager = null;
 var theThrobber = null;
 var currentFrameCount = 0;
 var gIterationCountDisplay = null;
+var gPerformanceDisplay = null;
 var gAnimationActive = false;
+var gAnimationStartTime = 0;
+var gLastLossList = null;
+var gLastThrobberChange = -1;
 
 const canvasSet = [null, null];
 
@@ -50,7 +54,11 @@ window.launch = function() {
 	canvasSet[0] = document.getElementById("back-cv");
 	canvasSet[1] = document.getElementById("cv");
 
-	resetNN();
+	gWorker = new Worker("./nn-worker.js", {type: "module", credentials: "omit"});
+	gWorker.onmessage = onWorkerMessage;
+};
+
+function setupControlUIs() {
 	theControlButtons = new ButtonManager("control-button-container", onCommandButtonClick);
 	theControlButtons.setDisabled("p", true);
 
@@ -58,24 +66,17 @@ window.launch = function() {
 	theControlTabPager.selectByIndex(0);
 
 	showTrainDataPreview("data-preview-items", TRAIN_DATA_1);
-
 	setupInputArea("data-input-pane", onExecuteInferenceClick);
+}
 
-	gWorker = new Worker("./nn-worker.js", {type: "module", credentials: "omit"});
-	gWorker.onmessage = onWorkerMessage;
-};
-
-function onWorkerMessage(e) {
-	if (e && e.data) {
-		sendNNConfiguration(TestNN);
-	}
-};
-
-function sendNNConfiguration(cf) {
-	gWorker.postMessage({conf: cf});
+function onWorkerReady() {
+	setupControlUIs();
+	resetNN();
 }
 
 function resetNN() {
+	gLastLossList = null;
+	gLastThrobberChange = -1;
 	pickParams();
 
 	const b_report = {};
@@ -85,12 +86,14 @@ function resetNN() {
 	p_ct.innerHTML = "";
 	p_ct.appendChild( document.createTextNode(b_report.nEdges+" edge weights") );
 
-	for (let i = 0;i < TestNN.Initialization.numOfSamples;++i) {
-		const src = TRAIN_DATA_1[i];
-		const samp = nn.setClassificationTrainData(i, src.data, i % 10);
-		samp.set2DMetrics(src.width, src.height);
-		samp.augMode = TestNN.Initialization.augmentation;
-	}
+	const trainDataset = makeTrainDataset(
+		TRAIN_DATA_1, 
+		TestNN.Initialization.augmentation,
+		TestNN.Initialization.numOfSamples
+	);
+	setTrainDataset(nn, trainDataset);
+	sendBuildCommand(TestNN, trainDataset);
+
 
 	// Set output label
 	nn.forEachNodeAtLayer(-1, (node, nodeIndex) => {  node.label = `${nodeIndex}`;  });
@@ -102,13 +105,43 @@ function resetNN() {
 	currentFrameCount = 0;
 }
 
+function makeTrainDataset(source, augMode, n) {
+	const sampleList = [];
+
+	for (let i = 0;i < n;++i) {
+		const inset = source[i];
+		sampleList.push({
+			data: inset.data,
+			classIndex: i % 10,
+			width: inset.width,
+			height: inset.height
+		});
+	}
+
+	const res = {
+		sampleList: sampleList,
+		augMode: augMode
+	};
+
+	return res;
+}
+
+function addCounterP(parent, className) {
+	const el = document.createElement("p");
+	el.className = className;
+	parent.appendChild(el);
+
+	return el;
+}
+
 function setupCharts(containerElement, n) {
 	containerElement.innerHTML = "";
 
-	gIterationCountDisplay = document.createElement("p");
-	gIterationCountDisplay.className = "iteration-counter";
-	containerElement.appendChild(gIterationCountDisplay);
+	gIterationCountDisplay = addCounterP(containerElement, "iteration-counter");
 	updateIterationCounter(0);
+
+	gPerformanceDisplay = addCounterP(containerElement, "iteration-counter");
+	updatePerfoemanceCounter(0);
 
 	theLogChart = new NNErrorLogChart(100, 192, window.devicePixelRatio, n+1);
 	containerElement.appendChild(theLogChart.canvas);
@@ -119,41 +152,45 @@ function setupCharts(containerElement, n) {
 }
 
 function updateIterationCounter(i) {
-	if (gIterationCountDisplay) {
-		gIterationCountDisplay.innerHTML = "";
-		gIterationCountDisplay.appendChild( document.createTextNode(`Iteration: ${i}`) );
+	renewTextNodeValue(gIterationCountDisplay, `Iteration: ${i}`);
+}
+
+function updatePerfoemanceCounter(t) {
+	renewTextNodeValue(gPerformanceDisplay, `${t.toFixed(1)}ms/iter`);
+}
+
+function renewTextNodeValue(el, t) {
+	if (el) {
+		el.innerHTML = "";
+		el.appendChild( document.createTextNode(t) );
 	}
 }
 
 function enterFrame() {
-	for (let i = 0;i < 24;++i) {
-		theNN.advanceLearning();
-	}
-	const showSampleIndex = Math.floor(currentFrameCount / 6) % TestNN.Initialization.numOfSamples;
-	theNN.advanceLearning( (nn, sampleIndex) => {
-		if (sampleIndex === showSampleIndex) {
-			nn.doForwardPropagation();
-			renderNetwork(canvasSet, nn, window.devicePixelRatio);
-		}
-	} );
-
-	theNN.forEachTrainDataSample( (sample, s_index) => {
-		theLogChart.pushValue(s_index, sample.lastErrorAmount);
-	} );
-	theLogChart.pushValue(theNN.numOfSamples, theNN.lastTotalError);
-	theLogChart.render();
-
-	updateIterationCounter(theNN.iterationCount);
-
-	const cycle = (currentFrameCount % 800);
-	if (cycle === 395) {
-		theThrobber.setPanic(1, 0);
-	} else if (cycle === 795) {
-		theThrobber.setPanic(1, 1);
+	if (currentFrameCount === 0) {
+		gAnimationStartTime = performance.now();
 	}
 
-	if (theNN.lastTotalError <= TestNN.Initialization.completionThreshold) {
-		stopLearning(true);
+	const etime = performance.now() - gAnimationStartTime;
+
+	const showSampleIndex = Math.floor(etime / 500) % TestNN.Initialization.numOfSamples;
+	const frontNN = theNN;
+
+	if (0 === (currentFrameCount & 7)) {
+		frontNN.selectSample(showSampleIndex);
+	}
+	frontNN.doForwardPropagation();
+	renderNetwork(canvasSet, frontNN, window.devicePixelRatio);
+
+	if (gAnimationActive && gLastThrobberChange !== currentFrameCount) {
+		const cycle = Math.floor(etime / 1000) % 20;
+		if (cycle === 9) {
+			theThrobber.setPanic(1, 0);
+			gLastThrobberChange = currentFrameCount;
+		} else if (cycle === 19) {
+			theThrobber.setPanic(1, 1);
+			gLastThrobberChange = currentFrameCount;
+		}	
 	}
 
 	++currentFrameCount;
@@ -167,7 +204,7 @@ function onCommandButtonClick(_manager, _button, command) {
 
 	switch(command) {
 		case 'r':
-			resetNN();
+			sendStopCommand(1);
 			break;
 
 		case 'x':
@@ -176,10 +213,13 @@ function onCommandButtonClick(_manager, _button, command) {
 				gAnimationActive = true;
 				theControlButtons.setDisabled("x", true);
 				theControlButtons.setDisabled("p", false);
+				sendExecCommand();
 				enterFrame();
 			}
+			
 			break;
 		case 'p':
+			sendStopCommand();
 			stopLearning();
 			break;
 	}
@@ -218,6 +258,7 @@ function pickTransferFuncSelection() {
 }
 
 function stopLearning(complete) {
+	sendStopCommand();
 	gAnimationActive = false;
 	theControlButtons.setDisabled("x", false);
 	theControlButtons.setDisabled("p", true);
@@ -309,4 +350,51 @@ function updateDirtyFlag() {
 
 function nearly_equals(a, b) {
 	return Math.abs(a - b) < 0.000001;
+}
+
+// Worker communication -------------------------
+
+function onWorkerMessage(e) {
+	if (e && e.data) {
+		const edat = e.data;
+		if (edat.workerReady) {
+			onWorkerReady();
+		} else if (edat.nnBuilt) {
+			theControlButtons.setDisabled("x", false);			
+		} else if (edat.learned) {
+			const learn_status = edat.learned;
+			gLastLossList = learn_status.lossList;
+			recordLossList(gLastLossList);
+			updateIterationCounter(learn_status.iterationCount);
+			updatePerfoemanceCounter(learn_status.et / learn_status.chunkIterations);
+			theNN.importParams(learn_status.params);
+			if (learn_status.lastTotalError <= TestNN.Initialization.completionThreshold) {
+				stopLearning(true);
+			}
+		} else if (edat.stopped === 1) {
+			stopLearning();
+			resetNN();
+		}
+	}
+};
+
+function recordLossList(lossList) {
+	const nLoss = lossList.length;
+	for (let il = 0;il < nLoss;++il) {
+		theLogChart.pushValue(il, lossList[il]);
+	}
+	theLogChart.render();
+}
+
+function sendBuildCommand(cf, trainDataset) {
+	theControlButtons.setDisabled("x", true);
+	gWorker.postMessage({conf: cf, trainDataset: trainDataset});
+}
+
+function sendExecCommand() {
+	gWorker.postMessage({learn: true});
+}
+
+function sendStopCommand(sendBackParam) {
+	gWorker.postMessage({stop: true, sendBackParam: sendBackParam});
 }

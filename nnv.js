@@ -61,6 +61,7 @@ class NeuralNetwork {
 		}
 
 		this.mode = NNMODE_LEARN;
+		this.eidMap = {};
 
 		this.learningRate = learningRate;
 		this.momentum = 0;
@@ -90,6 +91,24 @@ class NeuralNetwork {
 	forEachNodeAtLayer(i, fn) {
 		if (i < 0) { i = this.layerList.length - 1; }
 		this.layerList[i].nodes.forEach(fn);
+	}
+
+	exportInternalParams() {
+		const keys = Object.keys(this.eidMap);
+		const res = {};
+
+		for (const k of keys) {
+			res[k] = this.eidMap[k].weight;
+		}
+
+		return res;
+	}
+
+	importParams(eid_weight_map) {
+		const keys = Object.keys(eid_weight_map);
+		for (const k of keys) {
+			this.eidMap[k].weight = eid_weight_map[k];
+		}
 	}
 
 	reportInferenceResult() {
@@ -298,13 +317,22 @@ class NeuralNetwork {
 
 		const selfLayer = this.layerList[firstLayerIndex];
 		const nextLayer = this.layerList[firstLayerIndex+1];
+		let fromNodeIndex = 0;
 		for (const selfNode of selfLayer.nodes) {
+			let toNodeIndex = 0;
 			for (const nextNode of nextLayer.nodes) {
 				if (nextNode.type !== NT_Constant) {
-					selfNode.connectToForward(nextNode);
+					const edge = selfNode.connectToForward(nextNode);
+					const eid = makeEdgeId(firstLayerIndex, fromNodeIndex, toNodeIndex);
+					this.eidMap[eid] = edge;
+
 					++nConnected;
 				}
+
+				++toNodeIndex;
 			}
+
+			++fromNodeIndex;
 		}
 
 		return nConnected;
@@ -346,6 +374,12 @@ class NeuralNetwork {
 
 		samp.lastErrorAmount /= lastLayer.nodes.length;
 	}
+}
+
+function makeEdgeId(li, from_i, to_i) {
+	if (from_i > 999) { throw new Error(`Node index (from) exceeds limit: ${from_i}`); }
+	if (to_i > 999) { throw new Error(`Node index (from) exceeds limit: ${to_i}`); }
+	return (li * 1000000) + (from_i * 1000) + to_i;
 }
 
 class NNSampleData {
@@ -507,6 +541,7 @@ class NNNode {
 		this.forwards.push(edge);
 
 		fwdNode.connectBack(edge);
+		return edge;
 	}
 
 	connectBack(edge) {
@@ -636,6 +671,22 @@ function txfuncFromStringIf(f) {
 	return TransferFunctions[f];
 }
 
+function setTrainDataset(nn, dataset) {
+	const ls = dataset.sampleList;
+	const n = ls.length;
+
+	for (let i = 0;i < n;++i) {
+		const src = ls[i];
+
+		const samp = nn.setClassificationTrainData(i, src.data, src.classIndex);
+		if (Number.isSafeInteger(src.width)) {
+			samp.set2DMetrics(src.width, src.height);
+		}
+
+		samp.augMode = dataset.augMode;
+	}
+
+}
 
 // Visualization
 
@@ -933,4 +984,4 @@ function raise_by_log(raw) {
 */
 
 export { NeuralNetwork, NNNode, NNConnection, buildNetwork, renderNetwork, NNMODE_LEARN, NNMODE_USE };
-export { NNAUG_NONE, NNAUG_2DTRANS, TransferFunctions };
+export { NNAUG_NONE, NNAUG_2DTRANS, TransferFunctions, setTrainDataset };
