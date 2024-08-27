@@ -786,7 +786,7 @@ function renderNodes(g, w, h, pixelRatio, nn) {
 			g.fillStyle = "#456";
 			g.lineWidth = pixelRatio;
 
-			const radius = 9 * pixelRatio;
+			const radius = 12 * pixelRatio;
 			if (is2d) {
 				render2DNode(g, nd, pixelRatio);
 			} else {
@@ -824,10 +824,10 @@ function renderNodeLabel(g, x, y, text, pixelRatio) {
 
 	g.textAlign = "center";
 	g.textBaseline = "middle";
-	g.font = `bold ${8*pixelRatio}px sans-serif`;
+	g.font = `bold ${10*pixelRatio}px sans-serif`;
 
 	g.beginPath();
-	g.arc(x, y, 6*pixelRatio, 0, Math.PI*2, false);
+	g.arc(x, y, 8*pixelRatio, 0, Math.PI*2, false);
 	g.fillStyle = "#346";
 	g.fill();
 
@@ -877,11 +877,11 @@ function renderMeter(g, x, y, w, h, ratio, color, label, pixelRatio, offsetX) {
 	g.fillRect(x+w2 + (offsetX || 0), y, len, h);
 
 	g.fillStyle = "#aaa";
-	g.font = `normal ${8*pixelRatio}px 'Courier New',monospace`;
+	g.font = `normal ${10*pixelRatio}px 'Courier New',monospace`;
 	g.textBaseline = "top";
 	g.textAlign = "left";
 	if (Number.isFinite(label)) {
-		g.fillText(label.toFixed(3), x+w+ pixelRatio*3, y);
+		g.fillText(label.toFixed(3), x+w+ pixelRatio*3, y-pixelRatio*2);
 	}
 }
 
