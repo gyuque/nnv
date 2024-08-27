@@ -58,10 +58,20 @@ window.launch = function() {
 	setupSounds();
 	canvasSet[0] = document.getElementById("back-cv");
 	canvasSet[1] = document.getElementById("cv");
+	adjustHighDPICanvasSize(canvasSet[1], canvasSet[0]);
 
 	gWorker = new Worker("./nn-worker.js", {type: "module", credentials: "omit"});
 	gWorker.onmessage = onWorkerMessage;
 };
+
+function adjustHighDPICanvasSize(destCanvas, refCanvas) {
+	const scale = (window.devicePixelRatio > 1.5) ? 2 : 1;
+	const w = refCanvas.width - 0;
+	const h = refCanvas.height - 0;
+
+	destCanvas.width = w * scale;
+	destCanvas.height = h * scale;
+}
 
 function setupSounds() {
 	const a1 = document.createElement("audio");
