@@ -114,7 +114,7 @@ class NNErrorLogChart {
 	drawMidScale(g, canvasHeight, val, w, pr) {
 		const y = this.calcYPos(val, canvasHeight);
 		this.drawXaxis(g, y, w, pr);
-		g.font = `normal ${9*pr}px monospace`;
+		g.font = `normal ${9*pr}px 'Courier New',monospace`;
 		g.textAlign = "right";
 		g.textBaseline = "middle";
 		g.fillText(val.toFixed(1), this.leftPadding-pr*3, y);

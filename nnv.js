@@ -877,10 +877,12 @@ function renderMeter(g, x, y, w, h, ratio, color, label, pixelRatio, offsetX) {
 	g.fillRect(x+w2 + (offsetX || 0), y, len, h);
 
 	g.fillStyle = "#aaa";
-	g.font = "normal 12px monospace";
+	g.font = `normal ${8*pixelRatio}px 'Courier New',monospace`;
 	g.textBaseline = "top";
 	g.textAlign = "left";
-	g.fillText(label, x+w+ pixelRatio*3, y);
+	if (Number.isFinite(label)) {
+		g.fillText(label.toFixed(3), x+w+ pixelRatio*3, y);
+	}
 }
 
 function render2DNode(g, node, pixelRatio) {

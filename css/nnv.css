@@ -67,7 +67,7 @@ table {
 .iteration-counter {
 	font-size: 10px;
 	font-weight: bold;
-	font-family: monospace;
+	font-family: 'Courier New',monospace;
 }
 
 .stats-col {
@@ -185,6 +185,8 @@ table {
 	border: 1px solid #888;
 	margin-left: 8px;
 	margin-right: 8px;
+	padding-top: 0.2em;
+	padding-bottom: 0.2em;
 }
 
 #configuration-pane label {
@@ -452,4 +454,80 @@ table {
 	margin-right: 5px;
 	display: inline-block;
 	margin-top: -2px;
+}
+
+
+#preset-button {
+	display: inline-block;
+	background: url("../images/preset.png") center left no-repeat;
+	background-size: 16px 16px;
+	height: 16px;
+	padding: 3px 4px 3px 20px;
+	font-size: 11px;
+	margin-top: 3px;
+
+	border: 1px solid #999;
+	border-radius: 4px;
+	text-decoration: none;
+	color: #ddd;
+}
+
+#preset-button:hover {
+	background-color: #555;	
+}
+
+#preset-button:hover:active {
+	background-color: #505050;	
+}
+
+.popup-container {
+	position: relative;
+}
+
+#preset-popup {
+	position: absolute;
+	bottom: 28px;
+	left: 0;
+	padding: 3px;
+	background-color: #fff;
+	color: #222;
+	border-radius: 8px;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
+	display: none;
+	opacity: 0;
+	transition-property: opacity;
+	transition-duration: 0.25s;
+}
+
+[data-popen="1"] #preset-popup {
+	display: block;
+}
+
+#preset-popup .preset-item {
+	display: block;
+	min-width: 9em;
+	background-color: #e0e6ef;
+	margin: 3px;
+	border-radius: 4px;
+	padding: 1em;
+	text-decoration: none;
+	color: #139;
+	font-size: 15px;
+	text-align: center;
+}
+
+#preset-popup .preset-item:hover {
+	color: #fff;
+	background-color: #139;	
+	box-shadow: 0 1px 1px rgba(200, 220, 255, 0.5) inset;
+}
+
+#preset-popup .preset-item:hover:active {
+	box-shadow: 0 1px 7px rgba(0, 0, 0, 0.5) inset;
+}
+
+.popup-tip {
+	position: absolute;
+	bottom: -9px;
+	left: 30px;
 }

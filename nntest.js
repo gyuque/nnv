@@ -2,6 +2,7 @@
 import { setupInputArea } from "./datainput.js";
 import { ButtonManager, LearningThrobber, NNErrorLogChart, TabPager } from "./nnchart.js";
 import { buildNetwork, NNAUG_2DTRANS, NNAUG_NONE, NNMODE_LEARN, NNMODE_USE, renderNetwork, setTrainDataset, TransferFunctions } from "./nnv.js";
+import { PresetPopup } from "./preset.js";
 
 const TestNN = {
 	LayersConfig: [
@@ -48,9 +49,10 @@ var gAnimationStartTime = 0;
 var gLastLossList = null;
 var gLastThrobberChange = -1;
 var gSoundShouldBePlayed = -1;
+var gPresetPopup = null;
 
 const canvasSet = [null, null];
-const soundSet = [null, null]
+const soundSet = [null, null, null]
 
 window.launch = function() {
 	setupSounds();
@@ -69,6 +71,10 @@ function setupSounds() {
 	const a2 = document.createElement("audio");
 	a2.src = "./sound/chin.mp3";
 	soundSet[1] = a2;
+
+	const a3 = document.createElement("audio");
+	a3.src = "./sound/syupo.mp3";
+	soundSet[2] = a3;
 
 	setInterval(soundInterval, 500);
 }
@@ -96,6 +102,8 @@ function setupControlUIs() {
 
 	showTrainDataPreview("data-preview-items", TRAIN_DATA_1);
 	setupInputArea("data-input-pane", onExecuteInferenceClick);
+
+	gPresetPopup = new PresetPopup("preset-button", "preset-popup", onPresetSelected);
 }
 
 function onWorkerReady() {
@@ -234,7 +242,7 @@ function onCommandButtonClick(_manager, _button, command) {
 
 	switch(command) {
 		case 'r':
-			sendStopCommand(1);
+			invokeRebuild();
 			break;
 
 		case 'x':
@@ -254,6 +262,10 @@ function onCommandButtonClick(_manager, _button, command) {
 			stopLearning();
 			break;
 	}
+}
+
+function invokeRebuild() {
+	sendStopCommand(1);
 }
 
 function pickParams() {
@@ -357,6 +369,8 @@ function onExecuteInferenceClick(inputData) {
 	const report = theNN.reportInferenceResult();
 	const ambiguous = report.secondNode.outValue / report.firstNode.outValue;
 	theThrobber.nowInferred(report.firstNode.label, ambiguous > 0.6);
+
+	soundSet[2].play();
 }
 
 window.onAnyInputChange = function() {
@@ -430,4 +444,21 @@ function sendExecCommand() {
 function sendStopCommand(sendBackParam) {
 	gSoundShouldBePlayed = -1;
 	gWorker.postMessage({stop: true, sendBackParam: sendBackParam});
+}
+
+function onPresetSelected(presetItem) {
+	set_checkbox_value("data-aug-checkbox", presetItem.aug);
+	set_direct_value("txfunc-sel", presetItem.tx);
+	set_direct_value("param-lr", presetItem.lr);
+	set_direct_value("param-mom", presetItem.momentum);
+	set_direct_value("param-cth", presetItem.cth);
+	invokeRebuild();
+}
+
+function set_checkbox_value(dest_id, val) {
+	document.getElementById(dest_id).checked = val;
+}
+
+function set_direct_value(dest_id, val) {
+	document.getElementById(dest_id).value = val;
 }

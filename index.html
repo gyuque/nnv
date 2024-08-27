@@ -8,6 +8,7 @@
 
 		<script type="module" src="nnv.js"></script>
 		<script type="module" src="nnchart.js"></script>
+		<script type="module" src="preset.js"></script>
 		<script type="module" src="nntest.js"></script>
 	</head>
 	<body onload="void launch()">
@@ -36,6 +37,7 @@
 										<option value="LeakyReLU">LeakyReLU(a=0.1)</option>
 										<option value="ReLU">ReLU</option>
 									</select>
+								</label>
 								<label>Learning rate<br>
 									<input onkeyup="void onAnyInputChange()" onchange="void onAnyInputChange()" id="param-lr" type="number" step="0.001" max="1" min="0.001" value="0.04"></label>
 								<label>Momentum<br>
@@ -44,6 +46,14 @@
 									<input onkeyup="void onAnyInputChange()" onchange="void onAnyInputChange()" id="param-cth" type="number" step="0.001" max="1" min="0.001" value="0.01"></label>
 								<label>Generated parameters:</label>
 								<p id="intl-params-count">0</p>
+								<div class="popup-container">
+									<a id="preset-button" href="javascript:void(0)">Use preset</a>
+									<div id="preset-popup">
+										<a class="preset-item" data-name="basic" href="javascript:void(0)">Basic</a>
+										<a class="preset-item" data-name="advanced" href="javascript:void(0)">Advanced</a>
+										<img class="popup-tip" alt="" src="./images/p-tip.png" width="10" height="10">
+									</div>
+								</div>
 							</fieldset>
 							<div id="control-button-container">
 								<span id="rebuild-button-outer"><button data-command="r" style="color: #FFF" title="Rebuild" class="btn-type-destructive">↻</button><span class="notification-dot">!</span></span>&nbsp;
