@@ -34,6 +34,13 @@ address {
 
 address a { color: #389; }
 
+address img {
+	vertical-align: middle;
+	opacity: 0.5;
+	text-decoration: none;
+	border: none;
+}
+
 table {
 	margin-left: calc( 50% - 530px );
 	border-collapse: collapse;
